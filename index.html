@@ -45,9 +45,7 @@
   h1,h2,h3,.brand{font-family:'Baloo 2','Work Sans',sans-serif; font-weight:700; letter-spacing:-0.01em; margin:0;}
   button{font-family:inherit; cursor:pointer;}
   ::selection{background:var(--gold-400); color:var(--ink-900);}
-  button:focus-visible, input:focus-visible{
-    outline:3px solid var(--gold-400); outline-offset:2px; border-radius:4px;
-  }
+  button:focus-visible, input:focus-visible{outline:3px solid var(--gold-400); outline-offset:2px; border-radius:4px;}
   @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
   .view{display:none; min-height:100vh;}
   .view.active{display:block;}
@@ -76,14 +74,8 @@
   .card .sub{color:var(--text-muted); font-size:.92rem; margin-top:6px; line-height:1.55;}
   .field{margin-top:18px;}
   .field label{display:block; font-size:.82rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;}
-  .field input{
-    width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border);
-    background:var(--bg); color:var(--text); font-size:.94rem;
-  }
-  .code-display{
-    background:var(--bg-alt); border:1.5px dashed var(--border); border-radius:14px; padding:16px;
-    text-align:center; margin-top:14px;
-  }
+  .field input{width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg); color:var(--text); font-size:.94rem;}
+  .code-display{background:var(--bg-alt); border:1.5px dashed var(--border); border-radius:14px; padding:16px; text-align:center; margin-top:14px;}
   .code-display .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:1.6rem; font-weight:700; letter-spacing:.08em;}
   .copy-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; justify-content:center;}
   .step-label{display:inline-flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--leaf-500); text-transform:uppercase; letter-spacing:.04em;}
@@ -139,11 +131,7 @@
   .chat-input-row button.send{background:var(--accent); color:#fff; border:none; border-radius:12px; padding:0 16px; font-weight:600; height:42px;}
   .ctrl-btn{width:42px; height:42px; border-radius:50%; border:1px solid rgba(245,239,221,0.14); background:var(--moss-800); color:var(--cream-050); font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative;}
   .ctrl-btn.is-off{background:var(--danger); border-color:var(--danger); color:#fff;}
-  .ctrl-btn.has-badge::after{
-    content:attr(data-badge); position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff;
-    font-size:.65rem; font-weight:700; border-radius:999px; min-width:16px; height:16px; padding:0 4px;
-    display:flex; align-items:center; justify-content:center;
-  }
+  .ctrl-btn.has-badge::after{content:attr(data-badge); position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; font-size:.65rem; font-weight:700; border-radius:999px; min-width:16px; height:16px; padding:0 4px; display:flex; align-items:center; justify-content:center;}
   .reactions-pop{position:absolute; bottom:52px; right:0; background:var(--moss-900); border:1px solid rgba(245,239,221,0.14); border-radius:14px; padding:8px; display:flex; gap:6px; box-shadow:0 8px 24px rgba(0,0,0,.4); z-index:5;}
   .reactions-pop button{background:none; border:none; font-size:1.3rem; padding:6px; border-radius:10px;}
   .reactions-pop button:hover{background:var(--moss-800);}
@@ -206,9 +194,7 @@
     <span class="step-label">Waiting room</span>
     <h2 style="margin-top:8px;">Share this code</h2>
     <p class="sub">Send it to whoever's joining. When they knock, click <strong>Allow</strong>.</p>
-    <div class="code-display">
-      <div class="code" id="hostCodeText">…</div>
-    </div>
+    <div class="code-display"><div class="code" id="hostCodeText">…</div></div>
     <div class="copy-row">
       <button class="btn btn-ghost btn-sm" id="copyCodeBtn" type="button">Copy code</button>
       <button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copy invite link</button>
@@ -240,7 +226,7 @@
   <div class="card" id="guestWaitingCard" style="display:none; text-align:center;">
     <span class="spinner-shell">🐌</span>
     <h2 style="margin-top:10px;">Waiting for host…</h2>
-    <p class="sub" id="guestWaitingSub">Knocking. This screen updates automatically when they Allow.</p>
+    <p class="sub">Knocking. This updates when they Allow.</p>
     <div class="status-line" style="justify-content:center;"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone…</span></div>
     <div class="status-line" style="justify-content:center; margin-top:8px;"><span class="status-dot pulse" id="guestPeerDot"></span><span id="guestPeerText">Looking for host…</span></div>
     <div class="debug-box" id="guestDebug" style="text-align:left;">Room: —</div>
@@ -304,8 +290,7 @@
 </section>
 
 <script type="module">
-// Use BitTorrent strategy — often more reliable for cross-device discovery than Nostr
-import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/torrent@0.25.4/+esm';
+import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqtt@0.25.4/+esm';
 
 (function () {
   "use strict";
@@ -344,8 +329,17 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     window.scrollTo(0, 0);
   }
 
-  // Unique app id — change if you fork so rooms don't collide with other people's tests
-  var APP_ID = 'snail-meet-gh-v4';
+  var APP_ID = 'snail-meet-gh-v5';
+  var ROOM_CONFIG = {
+    appId: APP_ID,
+    rtcConfig: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+      ]
+    }
+  };
   var WORDS = ["leaf","dew","moss","fern","snug","pond","shell","clover","hedge","petal","trail","burrow","meadow","drip","root","vine","seed","fog","rain","mud"];
 
   function makeCode() {
@@ -384,25 +378,16 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
 
   function getLocalAudio(dotEl, textEl) {
     if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-      if (dotEl) {
-        dotEl.className = 'status-dot err';
-        textEl.textContent = "No mic support — text-only.";
-      }
+      if (dotEl) { dotEl.className = 'status-dot err'; textEl.textContent = 'No mic support — text-only.'; }
       return Promise.resolve(null);
     }
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       state.localStream = stream;
-      if (dotEl) {
-        dotEl.className = 'status-dot ok';
-        textEl.textContent = 'Microphone ready.';
-      }
+      if (dotEl) { dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.'; }
       return stream;
     }).catch(function (err) {
       console.warn('getUserMedia failed', err);
-      if (dotEl) {
-        dotEl.className = 'status-dot err';
-        textEl.textContent = "Mic denied — text-only is fine.";
-      }
+      if (dotEl) { dotEl.className = 'status-dot err'; textEl.textContent = 'Mic denied — text-only is fine.'; }
       return null;
     });
   }
@@ -413,7 +398,6 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     var deny = room.makeAction('deny');
     var chat = room.makeAction('chat');
     var react = room.makeAction('react');
-
     state.actions = { knock: knock, grant: grant, deny: deny, chat: chat, react: react };
 
     knock.onMessage = function (data, meta) {
@@ -434,9 +418,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
       console.log('[guest] granted by', peerId);
       state.activePeerId = peerId;
       state.activeName = (data && data.name) ? String(data.name).slice(0, 24) : 'Host';
-      if (state.localStream) {
-        room.addStream(state.localStream, { target: peerId });
-      }
+      if (state.localStream) room.addStream(state.localStream, { target: peerId });
       stopKnockRetry();
       wireActiveMeetingActions();
       enterRoom();
@@ -444,9 +426,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
 
     deny.onMessage = function (data) {
       if (state.role !== 'guest' || state.activePeerId) return;
-      var reason = (data && data.reason === 'busy')
-        ? "Host is already in a meeting."
-        : "Host didn't let you in.";
+      var reason = (data && data.reason === 'busy') ? 'Host is already in a meeting.' : "Host didn't let you in.";
       document.getElementById('guestDeniedHeading').textContent = reason;
       document.getElementById('guestWaitingCard').style.display = 'none';
       document.getElementById('guestDeniedCard').style.display = 'block';
@@ -466,18 +446,16 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     var count = Object.keys(state.knownPeers).length;
     var text = count === 0
       ? (role === 'host' ? 'Looking for peers… (no one connected yet)' : 'Looking for host… (not found yet)')
-      : (role === 'host'
-          ? 'Peer connected — waiting for them to knock…'
-          : 'Found host — knocking…');
+      : (role === 'host' ? 'Peer connected — waiting for them to knock…' : 'Found host — knocking…');
     var dotClass = count > 0 ? 'status-dot ok' : 'status-dot pulse';
     if (role === 'host') {
       document.getElementById('hostPeerDot').className = dotClass;
       document.getElementById('hostPeerText').textContent = text;
-      setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: ' + count);
+      setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: ' + count);
     } else {
       document.getElementById('guestPeerDot').className = dotClass;
       document.getElementById('guestPeerText').textContent = text;
-      setDebug('guestDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: ' + count);
+      setDebug('guestDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: ' + count);
     }
   }
 
@@ -489,18 +467,12 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
 
   function startKnockRetry() {
     stopKnockRetry();
-    // Re-knock every 3s so late/slow connections still get the message
     state.knockInterval = setInterval(function () {
       if (state.role !== 'guest' || state.activePeerId || !state.room) return;
       var peers = state.room.getPeers ? state.room.getPeers() : {};
-      Object.keys(peers).forEach(function (pid) {
-        sendKnockTo(pid);
-      });
-      // also knock known peers from events
-      Object.keys(state.knownPeers).forEach(function (pid) {
-        sendKnockTo(pid);
-      });
-    }, 3000);
+      Object.keys(peers).forEach(function (pid) { sendKnockTo(pid); });
+      Object.keys(state.knownPeers).forEach(function (pid) { sendKnockTo(pid); });
+    }, 2500);
   }
 
   function stopKnockRetry() {
@@ -510,15 +482,8 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     }
   }
 
-  /* Landing */
-  document.getElementById('startMeetingBtn').addEventListener('click', function () {
-    resetHostView();
-    showView('hostView');
-  });
-  document.getElementById('joinMeetingBtn').addEventListener('click', function () {
-    resetGuestView();
-    showView('guestView');
-  });
+  document.getElementById('startMeetingBtn').addEventListener('click', function () { resetHostView(); showView('hostView'); });
+  document.getElementById('joinMeetingBtn').addEventListener('click', function () { resetGuestView(); showView('guestView'); });
   document.getElementById('hostBack1').addEventListener('click', function () { showView('landing'); });
   document.getElementById('hostBack2').addEventListener('click', function () { teardownRoom(); showView('landing'); });
   document.getElementById('guestBack1').addEventListener('click', function () { showView('landing'); });
@@ -536,7 +501,6 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     }
   }
 
-  /* HOST */
   function resetHostView() {
     document.getElementById('hostSetupCard').style.display = 'block';
     document.getElementById('hostWaitingCard').style.display = 'none';
@@ -559,14 +523,13 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     document.getElementById('hostWaitingCard').style.display = 'block';
     document.getElementById('hostCodeText').textContent = state.code;
 
-    // Invite link must match the actual GitHub Pages path
     var base = window.location.href.split('#')[0];
     window._snailInviteLink = base + '#join=' + encodeURIComponent(state.code);
 
     console.log('[host] joining room', state.code, 'selfId', selfId);
-    setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: 0');
+    setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: 0');
 
-    var room = joinRoom({ appId: APP_ID }, state.code);
+    var room = joinRoom(ROOM_CONFIG, state.code);
     state.room = room;
     setupRoomActions(room);
 
@@ -592,25 +555,18 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     var listHtml = ids.length
       ? '<div class="knock-list">' + ids.map(renderKnockItem).join('') + '</div>'
       : '<div class="knock-empty">No one has knocked yet.</div>';
-
     document.getElementById('hostKnockList').innerHTML = listHtml;
     wireKnockButtons(document.getElementById('hostKnockList'));
 
     var roomList = document.getElementById('roomKnockList');
     var bell = document.getElementById('roomKnockBtn');
     if (roomList) {
-      roomList.innerHTML = ids.length
-        ? ids.map(renderKnockItem).join('')
-        : '<div class="knock-empty">Nobody waiting.</div>';
+      roomList.innerHTML = ids.length ? ids.map(renderKnockItem).join('') : '<div class="knock-empty">Nobody waiting.</div>';
       wireKnockButtons(roomList);
     }
     if (bell) {
-      if (ids.length) {
-        bell.classList.add('has-badge');
-        bell.setAttribute('data-badge', String(ids.length));
-      } else {
-        bell.classList.remove('has-badge');
-      }
+      if (ids.length) { bell.classList.add('has-badge'); bell.setAttribute('data-badge', String(ids.length)); }
+      else { bell.classList.remove('has-badge'); }
     }
   }
 
@@ -618,16 +574,12 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     var name = escapeHtml(state.pending[peerId].name);
     return '<div class="knock-item" data-peer="' + peerId + '">' +
       '<span class="emoji">🐚</span><span class="kname">' + name + '</span>' +
-      '<div class="kactions">' +
-        '<button class="btn btn-allow btn-sm" data-action="allow" data-peer="' + peerId + '" type="button">Allow</button>' +
-      '</div></div>';
+      '<div class="kactions"><button class="btn btn-allow btn-sm" data-action="allow" data-peer="' + peerId + '" type="button">Allow</button></div></div>';
   }
 
   function wireKnockButtons(container) {
     container.querySelectorAll('button[data-action="allow"]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        allowPeer(btn.getAttribute('data-peer'));
-      });
+      btn.addEventListener('click', function () { allowPeer(btn.getAttribute('data-peer')); });
     });
   }
 
@@ -639,22 +591,15 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     state.activeName = name;
     console.log('[host] allowing', peerId, name);
     state.actions.grant.send({ name: state.myName }, { target: peerId });
-    if (state.localStream) {
-      state.room.addStream(state.localStream, { target: peerId });
-    }
+    if (state.localStream) state.room.addStream(state.localStream, { target: peerId });
     wireActiveMeetingActions();
     enterRoom();
     renderHostKnockLists();
   }
 
-  document.getElementById('copyCodeBtn').addEventListener('click', function () {
-    copyToClipboard(state.code, this);
-  });
-  document.getElementById('copyLinkBtn').addEventListener('click', function () {
-    copyToClipboard(window._snailInviteLink || '', this);
-  });
+  document.getElementById('copyCodeBtn').addEventListener('click', function () { copyToClipboard(state.code, this); });
+  document.getElementById('copyLinkBtn').addEventListener('click', function () { copyToClipboard(window._snailInviteLink || '', this); });
 
-  /* GUEST */
   function resetGuestView() {
     document.getElementById('guestSetupCard').style.display = 'block';
     document.getElementById('guestWaitingCard').style.display = 'none';
@@ -668,10 +613,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
 
   document.getElementById('guestKnockBtn').addEventListener('click', function () {
     var code = document.getElementById('guestCodeInput').value.trim().toLowerCase().replace(/\s+/g, '');
-    if (!code) {
-      alert('Enter the meeting code first.');
-      return;
-    }
+    if (!code) { alert('Enter the meeting code first.'); return; }
     state.role = 'guest';
     state.myName = document.getElementById('guestNameInput').value.trim() || 'Guest';
     state.code = code;
@@ -681,9 +623,9 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     document.getElementById('guestWaitingCard').style.display = 'block';
 
     console.log('[guest] joining room', code, 'selfId', selfId);
-    setDebug('guestDebug', 'Room: ' + code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: 0');
+    setDebug('guestDebug', 'Room: ' + code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: 0');
 
-    var room = joinRoom({ appId: APP_ID }, code);
+    var room = joinRoom(ROOM_CONFIG, code);
     state.room = room;
     setupRoomActions(room);
 
@@ -710,20 +652,13 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
       setTimeout(function () { btn.textContent = original; }, 1600);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(function () {
-        fallbackCopy(text); done();
-      });
-    } else {
-      fallbackCopy(text); done();
-    }
+      navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
   }
   function fallbackCopy(text) {
     var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(ta);
   }
@@ -743,10 +678,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
   function attachRemoteAudio(peerId, stream) {
     var container = document.getElementById('remoteAudioContainer');
     var existing = document.getElementById('audio-' + peerId);
-    if (existing) {
-      existing.srcObject = stream;
-      return;
-    }
+    if (existing) { existing.srcObject = stream; return; }
     var audioEl = document.createElement('audio');
     audioEl.id = 'audio-' + peerId;
     audioEl.autoplay = true;
@@ -816,9 +748,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
   }
 
   document.getElementById('chatSendBtn').addEventListener('click', sendChat);
-  document.getElementById('chatInput').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') sendChat();
-  });
+  document.getElementById('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
 
   function sendChat() {
     var input = document.getElementById('chatInput');
@@ -838,9 +768,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     b.addEventListener('click', function () {
       var emoji = b.getAttribute('data-emoji');
       spawnFloatEmoji(emoji, true);
-      if (state.activePeerId && state.actions) {
-        state.actions.react.send({ emoji: emoji }, { target: state.activePeerId });
-      }
+      if (state.activePeerId && state.actions) state.actions.react.send({ emoji: emoji }, { target: state.activePeerId });
       reactionsPop.style.display = 'none';
     });
   });
@@ -890,19 +818,15 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/tor
     var m = Math.floor(secs / 60), s = secs % 60;
     teardownRoom();
     document.getElementById('endedSummary').textContent =
-      "That was " + (m > 0 ? m + "m " : "") + s + "s of server-free conversation.";
+      'That was ' + (m > 0 ? m + 'm ' : '') + s + 's of server-free conversation.';
     showView('ended');
   });
 
   function teardownRoom() {
     clearInterval(state.clockInterval);
     stopKnockRetry();
-    if (state.room) {
-      try { state.room.leave(); } catch (e) {}
-    }
-    if (state.localStream) {
-      try { state.localStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-    }
+    if (state.room) { try { state.room.leave(); } catch (e) {} }
+    if (state.localStream) { try { state.localStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} }
     document.getElementById('remoteAudioContainer').innerHTML = '';
     state.room = null;
     state.actions = null;
