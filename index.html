@@ -87,7 +87,7 @@
     background:var(--bg-alt); border:1.5px dashed var(--border); border-radius:14px; padding:16px;
     text-align:center; margin-top:14px;
   }
-  .code-display .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:1.3rem; font-weight:700; letter-spacing:.02em;}
+  .code-display .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:1.6rem; font-weight:700; letter-spacing:.08em;}
   .copy-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; justify-content:center;}
   .step-label{display:inline-flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--leaf-500); text-transform:uppercase; letter-spacing:.04em;}
   .status-line{margin-top:16px; font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px;}
@@ -112,7 +112,6 @@
   .feature-card h3{font-size:1rem; margin-top:8px;}
   .feature-card p{margin:6px 0 0; color:var(--text-muted); font-size:.88rem; line-height:1.5;}
   .footer-strip{text-align:center; padding:20px 20px 50px; color:var(--text-muted); font-size:.82rem;}
-  /* ---- ROOM ---- */
   #room{background:var(--moss-950); color:var(--cream-050); display:flex; flex-direction:column;}
   .room-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(245,239,221,0.14);}
   .room-title{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-size:1.05rem;}
@@ -179,7 +178,7 @@
   <div class="hero">
     <div class="eyebrow">🐌 <span>peer-to-peer, no server, no video</span></div>
     <h1>Meetings that <em>take their time.</em></h1>
-    <p class="lede">Share a code, someone knocks, you click Allow — that's the whole handshake. Voice and text travel straight between your two browsers. No camera, no account, no backend.</p>
+    <p class="lede">Share a short code, someone knocks, you click Allow — that's the whole handshake. Voice and text travel straight between your two browsers. No camera, no account, no backend.</p>
     <div class="cta-row">
       <button class="btn btn-primary" id="startMeetingBtn" type="button"><span aria-hidden="true">＋</span> Start a meeting</button>
       <button class="btn btn-ghost" id="joinMeetingBtn" type="button">Join with a code</button>
@@ -198,7 +197,7 @@
   <div class="card" id="hostSetupCard">
     <span class="step-label">Host a meeting</span>
     <h2 style="margin-top:8px;">Give it a name</h2>
-    <p class="sub">We'll generate a short code. Share it with whoever's joining — they'll knock, and you let them in.</p>
+    <p class="sub">We'll generate a short code. Share it with whoever's joining — they'll knock, and you just click Allow.</p>
     <div class="field">
       <label for="hostNameInput">Your name</label>
       <input type="text" id="hostNameInput" placeholder="e.g. Shelly" maxlength="24">
@@ -209,7 +208,7 @@
   <div class="card" id="hostWaitingCard" style="display:none;">
     <span class="step-label">Waiting room</span>
     <h2 style="margin-top:8px;">Share this code</h2>
-    <p class="sub">Send it to whoever's joining. As soon as they knock, they'll show up below.</p>
+    <p class="sub">Send it to whoever's joining. When they knock, just click <strong>Allow</strong>.</p>
     <div class="code-display">
       <div class="code" id="hostCodeText">…</div>
     </div>
@@ -234,7 +233,7 @@
     </div>
     <div class="field">
       <label for="guestCodeInput">Meeting code</label>
-      <input type="text" id="guestCodeInput" placeholder="e.g. leaf-dew-482">
+      <input type="text" id="guestCodeInput" placeholder="e.g. moss42" autocomplete="off" spellcheck="false">
     </div>
     <button class="btn btn-primary" id="guestKnockBtn" type="button" style="margin-top:22px;">Knock</button>
     <button class="back-link" id="guestBack1" type="button">← Back</button>
@@ -345,17 +344,17 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
   }
 
   var APP_ID = 'snail-meet-lite-v3';
-  var WORDS = ["leaf", "dew", "moss", "fern", "snug", "pond", "shell", "bramble", "clover", "drizzle", "hedge", "petal", "thicket", "burrow", "meadow", "trail"];
+  // Short friendly codes: one short word + 2 digits  →  e.g. moss42, dew17
+  var WORDS = ["leaf","dew","moss","fern","snug","pond","shell","clover","hedge","petal","trail","burrow","meadow","drip","root","vine","seed","fog","rain","mud"];
 
   function makeCode() {
-    var w1 = WORDS[Math.floor(Math.random() * WORDS.length)];
-    var w2 = WORDS[Math.floor(Math.random() * WORDS.length)];
-    var num = Math.floor(100 + Math.random() * 900);
-    return w1 + "-" + w2 + "-" + num;
+    var w = WORDS[Math.floor(Math.random() * WORDS.length)];
+    var num = Math.floor(10 + Math.random() * 90); // 10–99
+    return w + num;
   }
 
   var state = {
-    role: null,          // 'host' | 'guest'
+    role: null,
     room: null,
     code: null,
     myName: '',
@@ -363,8 +362,8 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     micOn: true,
     activePeerId: null,
     activeName: '',
-    pending: {},         // host only: peerId -> { name }
-    actions: null,       // { knock, grant, deny, chat, react }
+    pending: {},
+    actions: null,
     startTime: null,
     clockInterval: null
   };
@@ -408,12 +407,10 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
 
     state.actions = { knock: knock, grant: grant, deny: deny, chat: chat, react: react };
 
-    // Host receives knocks
     knock.onMessage = function (data, meta) {
       var peerId = meta.peerId;
       var name = (data && data.name) ? data.name : 'Someone';
       if (state.activePeerId) {
-        // Already in a 1:1 meeting
         deny.send({ reason: 'busy' }, { target: peerId });
         return;
       }
@@ -421,7 +418,6 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
       renderHostKnockLists();
     };
 
-    // Guest receives grant / deny
     grant.onMessage = function (data, meta) {
       if (state.role !== 'guest' || state.activePeerId) return;
       var peerId = meta.peerId;
@@ -445,7 +441,6 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
       teardownRoom(true);
     };
 
-    // Streams from the other peer
     room.onPeerStream = function (stream, peerId) {
       attachRemoteAudio(peerId, stream);
     };
@@ -541,13 +536,13 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     }
   }
 
+  // Only "Allow" is shown — host just clicks yes to let them in
   function renderKnockItem(peerId) {
     var name = escapeHtml(state.pending[peerId].name);
     return '<div class="knock-item" data-peer="' + peerId + '">' +
       '<span class="emoji">🐚</span><span class="kname">' + name + '</span>' +
       '<div class="kactions">' +
         '<button class="btn btn-allow btn-sm" data-action="allow" data-peer="' + peerId + '" type="button">Allow</button>' +
-        '<button class="btn btn-deny btn-sm" data-action="deny" data-peer="' + peerId + '" type="button">Deny</button>' +
       '</div></div>';
   }
 
@@ -555,9 +550,7 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     container.querySelectorAll('button[data-action]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var peerId = btn.getAttribute('data-peer');
-        var action = btn.getAttribute('data-action');
-        if (action === 'allow') allowPeer(peerId);
-        else denyPeer(peerId);
+        if (btn.getAttribute('data-action') === 'allow') allowPeer(peerId);
       });
     });
   }
@@ -580,13 +573,6 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     renderHostKnockLists();
   }
 
-  function denyPeer(peerId) {
-    if (!state.pending[peerId] || !state.actions) return;
-    state.actions.deny.send({ reason: 'declined' }, { target: peerId });
-    delete state.pending[peerId];
-    renderHostKnockLists();
-  }
-
   document.getElementById('copyCodeBtn').addEventListener('click', function () {
     copyToClipboard(state.code, this);
   });
@@ -604,7 +590,7 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
   }
 
   document.getElementById('guestKnockBtn').addEventListener('click', function () {
-    var code = document.getElementById('guestCodeInput').value.trim();
+    var code = document.getElementById('guestCodeInput').value.trim().toLowerCase();
     if (!code) {
       alert('Enter the meeting code first.');
       return;
@@ -620,7 +606,6 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     state.room = room;
     setupRoomActions(room);
 
-    // Knock whenever we see a peer (covers both arrival orders)
     room.onPeerJoin = function (peerId) {
       if (state.actions) {
         state.actions.knock.send({ name: state.myName }, { target: peerId });
@@ -665,7 +650,7 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     document.body.removeChild(ta);
   }
 
-  /* ---------- Active meeting: chat / react / audio ---------- */
+  /* ---------- Active meeting ---------- */
   function wireActiveMeetingActions() {
     if (!state.actions) return;
 
@@ -842,7 +827,7 @@ import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
     showView('ended');
   });
 
-  function teardownRoom(skipViewChange) {
+  function teardownRoom() {
     clearInterval(state.clockInterval);
     if (state.room) {
       try { state.room.leave(); } catch (e) {}
