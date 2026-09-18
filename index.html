@@ -10,23 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e;
-    --leaf-500:#7c9a5b; --leaf-100:#e4ecd7;
+    --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e; --moss-700:#34482a;
+    --leaf-500:#7c9a5b; --leaf-300:#b8cf98; --leaf-100:#e4ecd7;
     --cream-100:#f5efdd; --cream-050:#faf6ea;
     --shell-500:#c17a44; --shell-600:#a5622f; --gold-400:#d9a441;
     --ink-900:#181f11; --ink-700:#3a4530;
     --bg: var(--cream-050); --bg-alt: var(--cream-100);
-    --surface:#ffffff;
+    --surface:#ffffff; --surface-2: var(--leaf-100);
     --text: var(--ink-900); --text-muted: var(--ink-700);
     --border: rgba(24,31,17,0.12);
-    --accent: var(--shell-500); --accent-ink:#ffffff;
+    --accent: var(--shell-500); --accent-ink:#ffffff; --leaf: var(--leaf-500);
     --danger:#b9503a; --ok:#6a9a4f;
     --shadow: 0 1px 2px rgba(17,25,14,0.06), 0 8px 24px rgba(17,25,14,0.08);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg: var(--moss-950); --bg-alt: var(--moss-900);
-      --surface: var(--moss-900);
+      --surface: var(--moss-900); --surface-2: var(--moss-800);
       --text: var(--cream-050); --text-muted: rgba(245,239,221,0.66);
       --border: rgba(245,239,221,0.14);
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
@@ -34,7 +34,7 @@
   }
   :root[data-theme="dark"]{
     --bg: var(--moss-950); --bg-alt: var(--moss-900);
-    --surface: var(--moss-900);
+    --surface: var(--moss-900); --surface-2: var(--moss-800);
     --text: var(--cream-050); --text-muted: rgba(245,239,221,0.66);
     --border: rgba(245,239,221,0.14);
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
@@ -45,10 +45,10 @@
   h1,h2,h3,.brand{font-family:'Baloo 2','Work Sans',sans-serif; font-weight:700; letter-spacing:-0.01em; margin:0;}
   button{font-family:inherit; cursor:pointer;}
   ::selection{background:var(--gold-400); color:var(--ink-900);}
-  button:focus-visible, input:focus-visible{
+  button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
     outline:3px solid var(--gold-400); outline-offset:2px; border-radius:4px;
   }
-  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
   .view{display:none; min-height:100vh;}
   .view.active{display:block;}
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:22px clamp(20px,5vw,56px); max-width:1180px; margin:0 auto;}
@@ -70,8 +70,11 @@
   .btn[disabled]{opacity:.5; cursor:not-allowed;}
   .btn-allow{background:var(--ok); color:#fff;}
   .btn-allow:hover{background:#5a8843;}
+  .btn-deny{background:transparent; border:1.5px solid var(--danger); color:var(--danger);}
+  .btn-deny:hover{background:var(--danger); color:#fff;}
   .cta-row{margin-top:30px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center;}
   .card{max-width:640px; margin:0 auto; background:var(--surface); border:1px solid var(--border); border-radius:22px; padding:30px; box-shadow:var(--shadow);}
+  .card + .card{margin-top:20px;}
   .card h2{font-size:1.3rem;}
   .card .sub{color:var(--text-muted); font-size:.92rem; margin-top:6px; line-height:1.55;}
   .field{margin-top:18px;}
@@ -87,7 +90,7 @@
   .code-display .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:1.6rem; font-weight:700; letter-spacing:.08em;}
   .copy-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; justify-content:center;}
   .step-label{display:inline-flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--leaf-500); text-transform:uppercase; letter-spacing:.04em;}
-  .status-line{margin-top:16px; font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .status-line{margin-top:16px; font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px;}
   .status-dot{width:8px; height:8px; border-radius:50%; background:var(--gold-400); flex-shrink:0;}
   .status-dot.ok{background:var(--ok);}
   .status-dot.err{background:var(--danger);}
@@ -109,7 +112,6 @@
   .feature-card h3{font-size:1rem; margin-top:8px;}
   .feature-card p{margin:6px 0 0; color:var(--text-muted); font-size:.88rem; line-height:1.5;}
   .footer-strip{text-align:center; padding:20px 20px 50px; color:var(--text-muted); font-size:.82rem;}
-  .debug-box{margin-top:14px; padding:10px 12px; border-radius:10px; background:var(--bg-alt); border:1px solid var(--border); font-size:.78rem; color:var(--text-muted); font-family:ui-monospace,monospace; line-height:1.45; word-break:break-all;}
   #room{background:var(--moss-950); color:var(--cream-050); display:flex; flex-direction:column;}
   .room-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(245,239,221,0.14);}
   .room-title{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-size:1.05rem;}
@@ -118,17 +120,17 @@
   .roster{width:200px; flex-shrink:0; border-right:1px solid rgba(245,239,221,0.14); padding:16px; display:flex; flex-direction:column; gap:10px;}
   @media (max-width:640px){.roster{display:none;}}
   .roster h4{font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(245,239,221,0.5); margin:0 0 4px;}
-  .roster-item{display:flex; align-items:center; gap:10px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.1); border-radius:12px; padding:10px 12px;}
+  .roster-item{display:flex; align-items:center; gap:10px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.1); border-radius:12px; padding:10px 12px; position:relative;}
   .roster-item .emoji{font-size:1.3rem;}
   .roster-item .rname{font-size:.86rem; font-weight:600;}
   .roster-item .rstatus{font-size:.72rem; color:rgba(245,239,221,0.5);}
   .chat-col{flex:1; display:flex; flex-direction:column; min-width:0;}
   .chat-messages{flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; position:relative;}
   .msg{max-width:70%;}
-  .msg .who{font-size:.72rem; color:rgba(245,239,221,0.5); margin-bottom:3px;}
+  .msg .who{font-size:.72rem; color:rgba(245,239,221,0.5); margin-bottom:3px; display:flex; align-items:center; gap:6px;}
   .msg .bubble{background:var(--moss-800); padding:10px 13px; border-radius:14px 14px 14px 4px; font-size:.92rem; line-height:1.45;}
   .msg.self{align-self:flex-end;}
-  .msg.self .who{text-align:right;}
+  .msg.self .who{justify-content:flex-end;}
   .msg.self .bubble{background:var(--accent); color:#fff; border-radius:14px 14px 4px 14px;}
   .msg.system{align-self:center; max-width:90%;}
   .msg.system .bubble{background:transparent; color:rgba(245,239,221,0.55); font-size:.78rem; font-style:italic; text-align:center;}
@@ -160,6 +162,7 @@
 </style>
 </head>
 <body>
+<!-- ============ LANDING ============ -->
 <section id="landing" class="view active">
   <div class="topbar">
     <div class="brandmark">
@@ -173,28 +176,28 @@
     <button class="theme-toggle" id="themeToggle" type="button"><span id="themeIcon">🌙</span><span id="themeLabel">Dusk mode</span></button>
   </div>
   <div class="hero">
-    <div class="eyebrow">🐌 <span>peer-to-peer · no server · no video</span></div>
+    <div class="eyebrow">🐌 <span>peer-to-peer, no server, no video</span></div>
     <h1>Meetings that <em>take their time.</em></h1>
-    <p class="lede">Share a short code, someone knocks, you click Allow. Voice and text go straight between browsers.</p>
+    <p class="lede">Share a short code, someone knocks, you click Allow — that's the whole handshake. Voice and text travel straight between your two browsers. No camera, no account, no backend.</p>
     <div class="cta-row">
       <button class="btn btn-primary" id="startMeetingBtn" type="button"><span aria-hidden="true">＋</span> Start a meeting</button>
       <button class="btn btn-ghost" id="joinMeetingBtn" type="button">Join with a code</button>
     </div>
   </div>
   <div class="features">
-    <div class="feature-card"><div class="ico">🚪</div><h3>Knock, then Allow</h3><p>Peers find each other automatically. You just click Allow.</p></div>
-    <div class="feature-card"><div class="ico">🎙️</div><h3>Voice, when you want it</h3><p>Mic-to-mic audio once you're both in. No camera.</p></div>
-    <div class="feature-card"><div class="ico">🔌</div><h3>No server to run</h3><p>Static files on GitHub Pages. Conversation stays peer-to-peer.</p></div>
+    <div class="feature-card"><div class="ico">🚪</div><h3>Knock, then Allow</h3><p>Peers find each other automatically. You just click Allow when someone shows up.</p></div>
+    <div class="feature-card"><div class="ico">🎙️</div><h3>Voice, when you want it</h3><p>Mic-to-mic audio once you're both in. No camera, ever.</p></div>
+    <div class="feature-card"><div class="ico">🔌</div><h3>No server to run</h3><p>Static files, hostable on GitHub Pages. Peer discovery rides on public infrastructure, your conversation doesn't.</p></div>
   </div>
   <div class="footer-strip">Snail Meet Lite · knock, get let in, talk 🐌</div>
 </section>
-
+<!-- ============ HOST (create + waiting room) ============ -->
 <section id="hostView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div></div>
   <div class="card" id="hostSetupCard">
     <span class="step-label">Host a meeting</span>
     <h2 style="margin-top:8px;">Give it a name</h2>
-    <p class="sub">We'll generate a short code. Share it — they'll knock, you click Allow.</p>
+    <p class="sub">We'll generate a short code. Share it with whoever's joining — they'll knock, and you just click Allow.</p>
     <div class="field">
       <label for="hostNameInput">Your name</label>
       <input type="text" id="hostNameInput" placeholder="e.g. Shelly" maxlength="24">
@@ -205,7 +208,7 @@
   <div class="card" id="hostWaitingCard" style="display:none;">
     <span class="step-label">Waiting room</span>
     <h2 style="margin-top:8px;">Share this code</h2>
-    <p class="sub">Send it to whoever's joining. When they knock, click <strong>Allow</strong>.</p>
+    <p class="sub">Send it to whoever's joining. When they knock, just click <strong>Allow</strong>.</p>
     <div class="code-display">
       <div class="code" id="hostCodeText">…</div>
     </div>
@@ -213,47 +216,43 @@
       <button class="btn btn-ghost btn-sm" id="copyCodeBtn" type="button">Copy code</button>
       <button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copy invite link</button>
     </div>
-    <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone…</span></div>
-    <div class="status-line" style="margin-top:8px;"><span class="status-dot pulse" id="hostPeerDot"></span><span id="hostPeerText">Looking for peers…</span></div>
-    <div class="debug-box" id="hostDebug">Room: —</div>
+    <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone access…</span></div>
     <div id="hostKnockList"></div>
     <button class="back-link" id="hostBack2" type="button">← Cancel meeting</button>
   </div>
 </section>
-
+<!-- ============ GUEST (join + knock) ============ -->
 <section id="guestView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div></div>
   <div class="card" id="guestSetupCard">
     <span class="step-label">Join a meeting</span>
-    <h2 style="margin-top:8px;">Enter the code</h2>
+    <h2 style="margin-top:8px;">Enter the code you were sent</h2>
     <div class="field">
       <label for="guestNameInput">Your name</label>
       <input type="text" id="guestNameInput" placeholder="e.g. Turbo" maxlength="24">
     </div>
     <div class="field">
       <label for="guestCodeInput">Meeting code</label>
-      <input type="text" id="guestCodeInput" placeholder="e.g. moss42" autocomplete="off" spellcheck="false" autocapitalize="off">
+      <input type="text" id="guestCodeInput" placeholder="e.g. moss42" autocomplete="off" spellcheck="false">
     </div>
     <button class="btn btn-primary" id="guestKnockBtn" type="button" style="margin-top:22px;">Knock</button>
     <button class="back-link" id="guestBack1" type="button">← Back</button>
   </div>
   <div class="card" id="guestWaitingCard" style="display:none; text-align:center;">
     <span class="spinner-shell">🐌</span>
-    <h2 style="margin-top:10px;">Waiting for host…</h2>
-    <p class="sub" id="guestWaitingSub">Knocking. This screen updates automatically when they Allow.</p>
-    <div class="status-line" style="justify-content:center;"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone…</span></div>
-    <div class="status-line" style="justify-content:center; margin-top:8px;"><span class="status-dot pulse" id="guestPeerDot"></span><span id="guestPeerText">Looking for host…</span></div>
-    <div class="debug-box" id="guestDebug" style="text-align:left;">Room: —</div>
+    <h2 style="margin-top:10px;">Waiting for the host to let you in…</h2>
+    <p class="sub" id="guestWaitingSub">This screen will move on by itself once they click Allow.</p>
+    <div class="status-line" style="justify-content:center;"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone access…</span></div>
     <button class="back-link" id="guestBack2" type="button">← Cancel</button>
   </div>
   <div class="card" id="guestDeniedCard" style="display:none; text-align:center;">
     <span class="spinner-shell" style="animation:none;">🐚</span>
-    <h2 style="margin-top:10px;" id="guestDeniedHeading">The host didn't let you in.</h2>
-    <p class="sub">Try knocking again, or check the code.</p>
+    <h2 style="margin-top:10px;" id="guestDeniedHeading">The host didn't let you in this time.</h2>
+    <p class="sub">You can try knocking again, or check the code with them.</p>
     <button class="btn btn-ghost" id="guestBack3" type="button" style="margin-top:16px;">← Back</button>
   </div>
 </section>
-
+<!-- ============ ROOM ============ -->
 <section id="room" class="view">
   <div class="room-header">
     <div class="room-title"><span aria-hidden="true">🐌</span><span id="roomTitleText">Meeting room</span></div>
@@ -268,10 +267,10 @@
       <div class="chat-messages" id="chatMessages"></div>
       <div id="remoteAudioContainer" style="display:none;"></div>
       <div class="chat-input-row">
-        <button class="ctrl-btn" id="micToggleBtn" type="button" title="Mute">🎙️</button>
-        <input type="text" id="chatInput" placeholder="Send a message…" aria-label="Chat" disabled>
+        <button class="ctrl-btn" id="micToggleBtn" type="button" title="Mute microphone">🎙️</button>
+        <input type="text" id="chatInput" placeholder="Send a slow, thoughtful message…" aria-label="Chat message" disabled>
         <div style="position:relative;">
-          <button class="ctrl-btn" id="reactBtn" type="button" title="Reaction">🥬</button>
+          <button class="ctrl-btn" id="reactBtn" type="button" title="Send a reaction">🥬</button>
           <div class="reactions-pop" id="reactionsPop" style="display:none;">
             <button data-emoji="🐌" type="button">🐌</button>
             <button data-emoji="🥬" type="button">🥬</button>
@@ -281,7 +280,7 @@
           </div>
         </div>
         <div style="position:relative;" id="roomKnockWrap">
-          <button class="ctrl-btn" id="roomKnockBtn" type="button" title="Waiting">🔔</button>
+          <button class="ctrl-btn" id="roomKnockBtn" type="button" title="Waiting requests">🔔</button>
           <div class="knock-pop" id="roomKnockPop" style="display:none;">
             <h5>Waiting to join</h5>
             <div id="roomKnockList"></div>
@@ -293,7 +292,7 @@
     </div>
   </div>
 </section>
-
+<!-- ============ ENDED ============ -->
 <section id="ended" class="view">
   <div class="ended-card">
     <span class="big-shell">🐌</span>
@@ -302,14 +301,13 @@
     <button class="btn btn-primary" id="backHomeBtn" type="button">Back to Snail Meet</button>
   </div>
 </section>
-
 <script type="module">
-// Use BitTorrent strategy — often more reliable for cross-device discovery than Nostr
-import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/torrent/+esm';
+import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/+esm';
 
 (function () {
   "use strict";
 
+  /* ---------- Theme ---------- */
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var themeIcon = document.getElementById('themeIcon');
@@ -330,6 +328,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
   });
   applyThemeLabel();
 
+  /* ---------- View switching ---------- */
   var views = {
     landing: document.getElementById('landing'),
     hostView: document.getElementById('hostView'),
@@ -344,14 +343,14 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     window.scrollTo(0, 0);
   }
 
-  // Unique app id — change if you fork so rooms don't collide with other people's tests
-  var APP_ID = 'snail-meet-gh-v4';
+  var APP_ID = 'snail-meet-lite-v3';
+  // Short friendly codes: one short word + 2 digits  →  e.g. moss42, dew17
   var WORDS = ["leaf","dew","moss","fern","snug","pond","shell","clover","hedge","petal","trail","burrow","meadow","drip","root","vine","seed","fog","rain","mud"];
 
   function makeCode() {
     var w = WORDS[Math.floor(Math.random() * WORDS.length)];
-    var num = Math.floor(10 + Math.random() * 90);
-    return (w + num).toLowerCase();
+    var num = Math.floor(10 + Math.random() * 90); // 10–99
+    return w + num;
   }
 
   var state = {
@@ -366,9 +365,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     pending: {},
     actions: null,
     startTime: null,
-    clockInterval: null,
-    knockInterval: null,
-    knownPeers: {}
+    clockInterval: null
   };
 
   function escapeHtml(str) {
@@ -377,16 +374,11 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     return d.innerHTML;
   }
 
-  function setDebug(elId, text) {
-    var el = document.getElementById(elId);
-    if (el) el.textContent = text;
-  }
-
   function getLocalAudio(dotEl, textEl) {
     if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
       if (dotEl) {
         dotEl.className = 'status-dot err';
-        textEl.textContent = "No mic support — text-only.";
+        textEl.textContent = "This browser can't access a microphone — continuing as text-only.";
       }
       return Promise.resolve(null);
     }
@@ -397,11 +389,10 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
         textEl.textContent = 'Microphone ready.';
       }
       return stream;
-    }).catch(function (err) {
-      console.warn('getUserMedia failed', err);
+    }).catch(function () {
       if (dotEl) {
         dotEl.className = 'status-dot err';
-        textEl.textContent = "Mic denied — text-only is fine.";
+        textEl.textContent = "No microphone access — continuing as text-only.";
       }
       return null;
     });
@@ -418,8 +409,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
 
     knock.onMessage = function (data, meta) {
       var peerId = meta.peerId;
-      var name = (data && data.name) ? String(data.name).slice(0, 24) : 'Someone';
-      console.log('[host] knock from', peerId, name);
+      var name = (data && data.name) ? data.name : 'Someone';
       if (state.activePeerId) {
         deny.send({ reason: 'busy' }, { target: peerId });
         return;
@@ -431,13 +421,11 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     grant.onMessage = function (data, meta) {
       if (state.role !== 'guest' || state.activePeerId) return;
       var peerId = meta.peerId;
-      console.log('[guest] granted by', peerId);
       state.activePeerId = peerId;
-      state.activeName = (data && data.name) ? String(data.name).slice(0, 24) : 'Host';
+      state.activeName = (data && data.name) ? data.name : 'Host';
       if (state.localStream) {
         room.addStream(state.localStream, { target: peerId });
       }
-      stopKnockRetry();
       wireActiveMeetingActions();
       enterRoom();
     };
@@ -445,72 +433,20 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     deny.onMessage = function (data) {
       if (state.role !== 'guest' || state.activePeerId) return;
       var reason = (data && data.reason === 'busy')
-        ? "Host is already in a meeting."
-        : "Host didn't let you in.";
+        ? "The host is already in a meeting with someone else right now."
+        : "The host didn't let you in this time.";
       document.getElementById('guestDeniedHeading').textContent = reason;
       document.getElementById('guestWaitingCard').style.display = 'none';
       document.getElementById('guestDeniedCard').style.display = 'block';
-      stopKnockRetry();
-      teardownRoom();
+      teardownRoom(true);
     };
 
     room.onPeerStream = function (stream, peerId) {
-      console.log('[stream] from', peerId);
       attachRemoteAudio(peerId, stream);
     };
   }
 
-  function updatePeerStatus(role, peerId, joined) {
-    if (joined) state.knownPeers[peerId] = true;
-    else delete state.knownPeers[peerId];
-    var count = Object.keys(state.knownPeers).length;
-    var text = count === 0
-      ? (role === 'host' ? 'Looking for peers… (no one connected yet)' : 'Looking for host… (not found yet)')
-      : (role === 'host'
-          ? 'Peer connected — waiting for them to knock…'
-          : 'Found host — knocking…');
-    var dotClass = count > 0 ? 'status-dot ok' : 'status-dot pulse';
-    if (role === 'host') {
-      document.getElementById('hostPeerDot').className = dotClass;
-      document.getElementById('hostPeerText').textContent = text;
-      setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: ' + count);
-    } else {
-      document.getElementById('guestPeerDot').className = dotClass;
-      document.getElementById('guestPeerText').textContent = text;
-      setDebug('guestDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: ' + count);
-    }
-  }
-
-  function sendKnockTo(peerId) {
-    if (!state.actions || state.role !== 'guest' || state.activePeerId) return;
-    console.log('[guest] sending knock to', peerId);
-    state.actions.knock.send({ name: state.myName }, { target: peerId });
-  }
-
-  function startKnockRetry() {
-    stopKnockRetry();
-    // Re-knock every 3s so late/slow connections still get the message
-    state.knockInterval = setInterval(function () {
-      if (state.role !== 'guest' || state.activePeerId || !state.room) return;
-      var peers = state.room.getPeers ? state.room.getPeers() : {};
-      Object.keys(peers).forEach(function (pid) {
-        sendKnockTo(pid);
-      });
-      // also knock known peers from events
-      Object.keys(state.knownPeers).forEach(function (pid) {
-        sendKnockTo(pid);
-      });
-    }, 3000);
-  }
-
-  function stopKnockRetry() {
-    if (state.knockInterval) {
-      clearInterval(state.knockInterval);
-      state.knockInterval = null;
-    }
-  }
-
-  /* Landing */
+  /* ---------- Landing ---------- */
   document.getElementById('startMeetingBtn').addEventListener('click', function () {
     resetHostView();
     showView('hostView');
@@ -531,21 +467,18 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     var m = hash.match(/^#join=(.+)$/);
     if (m) {
       resetGuestView();
-      document.getElementById('guestCodeInput').value = decodeURIComponent(m[1]).toLowerCase().trim();
+      document.getElementById('guestCodeInput').value = decodeURIComponent(m[1]);
       showView('guestView');
     }
   }
 
-  /* HOST */
+  /* ---------- HOST FLOW ---------- */
   function resetHostView() {
     document.getElementById('hostSetupCard').style.display = 'block';
     document.getElementById('hostWaitingCard').style.display = 'none';
     document.getElementById('hostMicStatusDot').className = 'status-dot pulse';
-    document.getElementById('hostMicStatusText').textContent = 'Requesting microphone…';
-    document.getElementById('hostPeerDot').className = 'status-dot pulse';
-    document.getElementById('hostPeerText').textContent = 'Looking for peers…';
+    document.getElementById('hostMicStatusText').textContent = 'Requesting microphone access…';
     document.getElementById('hostKnockList').innerHTML = '';
-    setDebug('hostDebug', 'Room: —');
   }
 
   document.getElementById('hostCreateBtn').addEventListener('click', function () {
@@ -553,35 +486,24 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     state.myName = document.getElementById('hostNameInput').value.trim() || 'Host';
     state.code = makeCode();
     state.pending = {};
-    state.knownPeers = {};
 
     document.getElementById('hostSetupCard').style.display = 'none';
     document.getElementById('hostWaitingCard').style.display = 'block';
     document.getElementById('hostCodeText').textContent = state.code;
-
-    // Invite link must match the actual GitHub Pages path
-    var base = window.location.href.split('#')[0];
-    window._snailInviteLink = base + '#join=' + encodeURIComponent(state.code);
-
-    console.log('[host] joining room', state.code, 'selfId', selfId);
-    setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: 0');
+    window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(state.code);
 
     var room = joinRoom({ appId: APP_ID }, state.code);
     state.room = room;
     setupRoomActions(room);
 
-    room.onPeerJoin = function (peerId) {
-      console.log('[host] peer joined', peerId);
-      updatePeerStatus('host', peerId, true);
-    };
     room.onPeerLeave = function (peerId) {
-      console.log('[host] peer left', peerId);
-      updatePeerStatus('host', peerId, false);
       if (state.pending[peerId]) {
         delete state.pending[peerId];
         renderHostKnockLists();
       }
-      if (state.activePeerId === peerId) handlePeerGoneMidMeeting();
+      if (state.activePeerId === peerId) {
+        handlePeerGoneMidMeeting();
+      }
     };
 
     getLocalAudio(document.getElementById('hostMicStatusDot'), document.getElementById('hostMicStatusText'));
@@ -591,7 +513,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     var ids = Object.keys(state.pending);
     var listHtml = ids.length
       ? '<div class="knock-list">' + ids.map(renderKnockItem).join('') + '</div>'
-      : '<div class="knock-empty">No one has knocked yet.</div>';
+      : '<div class="knock-empty">No one has knocked yet — this updates automatically.</div>';
 
     document.getElementById('hostKnockList').innerHTML = listHtml;
     wireKnockButtons(document.getElementById('hostKnockList'));
@@ -601,7 +523,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     if (roomList) {
       roomList.innerHTML = ids.length
         ? ids.map(renderKnockItem).join('')
-        : '<div class="knock-empty">Nobody waiting.</div>';
+        : '<div class="knock-empty">Nobody waiting right now.</div>';
       wireKnockButtons(roomList);
     }
     if (bell) {
@@ -614,6 +536,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     }
   }
 
+  // Only "Allow" is shown — host just clicks yes to let them in
   function renderKnockItem(peerId) {
     var name = escapeHtml(state.pending[peerId].name);
     return '<div class="knock-item" data-peer="' + peerId + '">' +
@@ -624,9 +547,10 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
   }
 
   function wireKnockButtons(container) {
-    container.querySelectorAll('button[data-action="allow"]').forEach(function (btn) {
+    container.querySelectorAll('button[data-action]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        allowPeer(btn.getAttribute('data-peer'));
+        var peerId = btn.getAttribute('data-peer');
+        if (btn.getAttribute('data-action') === 'allow') allowPeer(peerId);
       });
     });
   }
@@ -637,11 +561,13 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     delete state.pending[peerId];
     state.activePeerId = peerId;
     state.activeName = name;
-    console.log('[host] allowing', peerId, name);
+
     state.actions.grant.send({ name: state.myName }, { target: peerId });
+
     if (state.localStream) {
       state.room.addStream(state.localStream, { target: peerId });
     }
+
     wireActiveMeetingActions();
     enterRoom();
     renderHostKnockLists();
@@ -654,20 +580,17 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     copyToClipboard(window._snailInviteLink || '', this);
   });
 
-  /* GUEST */
+  /* ---------- GUEST FLOW ---------- */
   function resetGuestView() {
     document.getElementById('guestSetupCard').style.display = 'block';
     document.getElementById('guestWaitingCard').style.display = 'none';
     document.getElementById('guestDeniedCard').style.display = 'none';
     document.getElementById('guestMicStatusDot').className = 'status-dot pulse';
-    document.getElementById('guestMicStatusText').textContent = 'Requesting microphone…';
-    document.getElementById('guestPeerDot').className = 'status-dot pulse';
-    document.getElementById('guestPeerText').textContent = 'Looking for host…';
-    setDebug('guestDebug', 'Room: —');
+    document.getElementById('guestMicStatusText').textContent = 'Requesting microphone access…';
   }
 
   document.getElementById('guestKnockBtn').addEventListener('click', function () {
-    var code = document.getElementById('guestCodeInput').value.trim().toLowerCase().replace(/\s+/g, '');
+    var code = document.getElementById('guestCodeInput').value.trim().toLowerCase();
     if (!code) {
       alert('Enter the meeting code first.');
       return;
@@ -675,33 +598,30 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     state.role = 'guest';
     state.myName = document.getElementById('guestNameInput').value.trim() || 'Guest';
     state.code = code;
-    state.knownPeers = {};
 
     document.getElementById('guestSetupCard').style.display = 'none';
     document.getElementById('guestWaitingCard').style.display = 'block';
-
-    console.log('[guest] joining room', code, 'selfId', selfId);
-    setDebug('guestDebug', 'Room: ' + code + ' · me: ' + (selfId || '?').slice(0, 8) + ' · peers: 0');
 
     var room = joinRoom({ appId: APP_ID }, code);
     state.room = room;
     setupRoomActions(room);
 
     room.onPeerJoin = function (peerId) {
-      console.log('[guest] peer joined (likely host)', peerId);
-      updatePeerStatus('guest', peerId, true);
-      sendKnockTo(peerId);
-    };
-    room.onPeerLeave = function (peerId) {
-      console.log('[guest] peer left', peerId);
-      updatePeerStatus('guest', peerId, false);
-      if (state.activePeerId === peerId) handlePeerGoneMidMeeting();
+      if (state.actions) {
+        state.actions.knock.send({ name: state.myName }, { target: peerId });
+      }
     };
 
-    startKnockRetry();
+    room.onPeerLeave = function (peerId) {
+      if (state.activePeerId === peerId) {
+        handlePeerGoneMidMeeting();
+      }
+    };
+
     getLocalAudio(document.getElementById('guestMicStatusDot'), document.getElementById('guestMicStatusText'));
   });
 
+  /* ---------- Shared: clipboard ---------- */
   function copyToClipboard(text, btn) {
     if (!text) return;
     var done = function () {
@@ -711,10 +631,12 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done).catch(function () {
-        fallbackCopy(text); done();
+        fallbackCopy(text);
+        done();
       });
     } else {
-      fallbackCopy(text); done();
+      fallbackCopy(text);
+      done();
     }
   }
   function fallbackCopy(text) {
@@ -728,12 +650,15 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     document.body.removeChild(ta);
   }
 
+  /* ---------- Active meeting ---------- */
   function wireActiveMeetingActions() {
     if (!state.actions) return;
+
     state.actions.chat.onMessage = function (data, meta) {
       if (meta.peerId !== state.activePeerId) return;
       addChatLine(state.activeName, data.text, false);
     };
+
     state.actions.react.onMessage = function (data, meta) {
       if (meta.peerId !== state.activePeerId) return;
       spawnFloatEmoji(data.emoji, false);
@@ -763,7 +688,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     document.getElementById('chatMessages').innerHTML = '';
     renderRoster();
     renderHostKnockLists();
-    addSystemChatLine('Connected — browser to browser.');
+    addSystemChatLine('You’re connected — straight from browser to browser.');
     state.startTime = Date.now();
     clearInterval(state.clockInterval);
     state.clockInterval = setInterval(updateClock, 1000);
@@ -852,8 +777,12 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
   });
 
   document.addEventListener('click', function (e) {
-    if (!reactionsPop.contains(e.target) && e.target !== reactBtn) reactionsPop.style.display = 'none';
-    if (!roomKnockPop.contains(e.target) && e.target !== roomKnockBtn) roomKnockPop.style.display = 'none';
+    if (!reactionsPop.contains(e.target) && e.target !== reactBtn) {
+      reactionsPop.style.display = 'none';
+    }
+    if (!roomKnockPop.contains(e.target) && e.target !== roomKnockBtn) {
+      roomKnockPop.style.display = 'none';
+    }
   });
 
   function spawnFloatEmoji(emoji, fromSelf) {
@@ -861,9 +790,10 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     var el = document.createElement('div');
     el.className = 'float-emoji';
     el.textContent = emoji;
-    el.style.left = fromSelf ? '70%' : '20%';
+    el.style.left = (fromSelf ? '70%' : '20%');
     el.style.bottom = '10px';
     zone.appendChild(el);
+    zone.scrollTop = zone.scrollHeight;
     setTimeout(function () { el.remove(); }, 2200);
   }
 
@@ -871,37 +801,41 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
   micToggleBtn.addEventListener('click', function () {
     if (!state.localStream) return;
     state.micOn = !state.micOn;
-    state.localStream.getAudioTracks().forEach(function (t) { t.enabled = state.micOn; });
+    state.localStream.getAudioTracks().forEach(function (track) {
+      track.enabled = state.micOn;
+    });
     micToggleBtn.textContent = state.micOn ? '🎙️' : '🔇';
     micToggleBtn.classList.toggle('is-off', !state.micOn);
   });
 
   function handlePeerGoneMidMeeting() {
     if (!views.room.classList.contains('active')) return;
-    addSystemChatLine(state.activeName + ' left the meeting.');
+    addSystemChatLine(state.activeName + ' has left the meeting.');
     document.getElementById('roomStatus').textContent = 'peer disconnected';
     document.getElementById('chatInput').disabled = true;
     document.getElementById('chatSendBtn').disabled = true;
     state.activePeerId = null;
   }
 
+  /* ---------- Leave / teardown ---------- */
   document.getElementById('leaveBtn').addEventListener('click', function () {
     var secs = state.startTime ? Math.floor((Date.now() - state.startTime) / 1000) : 0;
     var m = Math.floor(secs / 60), s = secs % 60;
     teardownRoom();
     document.getElementById('endedSummary').textContent =
-      "That was " + (m > 0 ? m + "m " : "") + s + "s of server-free conversation.";
+      "That was " + (m > 0 ? m + "m " : "") + s + "s of unhurried, server-free conversation. Nicely paced.";
     showView('ended');
   });
 
   function teardownRoom() {
     clearInterval(state.clockInterval);
-    stopKnockRetry();
     if (state.room) {
       try { state.room.leave(); } catch (e) {}
     }
     if (state.localStream) {
-      try { state.localStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      try {
+        state.localStream.getTracks().forEach(function (t) { t.stop(); });
+      } catch (e) {}
     }
     document.getElementById('remoteAudioContainer').innerHTML = '';
     state.room = null;
@@ -911,7 +845,6 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/trystero@0.25.4/t
     state.localStream = null;
     state.micOn = true;
     state.pending = {};
-    state.knownPeers = {};
     micToggleBtn.textContent = '🎙️';
     micToggleBtn.classList.remove('is-off');
   }
