@@ -170,6 +170,18 @@
  
   .pill{display:inline-flex; align-items:center; gap:6px; font-size:.72rem; background:var(--bg-alt); border:1px solid var(--border); color:var(--text-muted); padding:4px 10px; border-radius:999px;}
   .note-box{margin-top:14px; font-size:.8rem; color:var(--text-muted); background:var(--bg-alt); border:1px solid var(--border); border-radius:12px; padding:12px 14px; line-height:1.5;}
+ 
+  .ctrl-btn.has-badge::after{
+    content:attr(data-badge); position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff;
+    font-size:.65rem; font-weight:700; border-radius:999px; min-width:16px; height:16px; padding:0 4px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .knock-pop{position:absolute; bottom:52px; right:0; width:290px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.14); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.4); z-index:5; color:var(--cream-050);}
+  .knock-pop h5{margin:0 0 10px; font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:rgba(245,239,221,0.55);}
+  .knock-pop .request-item{background:var(--moss-800); border-color:rgba(245,239,221,0.1); color:var(--cream-050);}
+  .knock-pop .decline-btn{color:rgba(245,239,221,0.7); border-color:rgba(245,239,221,0.2) !important;}
+  .knock-pop .empty-note{color:rgba(245,239,221,0.55);}
+  .knock-pop .btn-ghost{color:var(--cream-050); border-color:rgba(245,239,221,0.2);}
 </style>
 </head>
 <body>
@@ -199,8 +211,8 @@
   </div>
  
   <div class="features">
-    <div class="feature-card"><div class="ico">🚪</div><h3>One click to let someone in</h3><p>Share your meeting code once. When someone knocks, you just tap Allow.</p></div>
-    <div class="feature-card"><div class="ico">🎙️</div><h3>Voice, when you want it</h3><p>Mic-to-mic audio once you're both in. No camera, ever — just talk.</p></div>
+    <div class="feature-card"><div class="ico">🚪</div><h3>One click per guest</h3><p>Share your meeting code once. Everyone who knocks waits for your Allow — even after the meeting has started.</p></div>
+    <div class="feature-card"><div class="ico">🎙️</div><h3>Group voice, no camera</h3><p>Everyone in the room hears everyone else, plus shared chat and reactions. No camera, ever.</p></div>
     <div class="feature-card"><div class="ico">🔌</div><h3>Static-site friendly</h3><p>Ships as one HTML file — host it on GitHub Pages, no backend to run yourself.</p></div>
   </div>
   <div class="footer-strip">Snail Meet Lite · share a code, tap Allow, talk 🐌</div>
@@ -211,8 +223,8 @@
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Hosting</span></div>
   <div class="card">
     <span class="step-label">Your meeting code</span>
-    <h2 style="margin-top:8px;">Share this with the other person</h2>
-    <p class="sub">Send it however you like — chat, email, a slow pigeon. Once they enter it and knock, you'll see a request to let them in below.</p>
+    <h2 style="margin-top:8px;">Share this with everyone joining</h2>
+    <p class="sub">Send it however you like — chat, email, a slow pigeon. Each person who knocks shows up below, and you tap Allow for each one. Up to 8 people, including you.</p>
  
     <div class="field">
       <label for="hostNameInput">Your name</label>
@@ -282,7 +294,7 @@
     </div>
     <div class="chat-col">
       <div class="chat-messages" id="chatMessages"></div>
-      <audio id="remoteAudio" autoplay playsinline style="display:none;"></audio>
+      <div id="remoteAudioContainer" style="display:none;"></div>
       <div class="chat-input-row">
         <button class="ctrl-btn" id="micToggleBtn" type="button" title="Mute microphone">🎙️</button>
         <input type="text" id="chatInput" placeholder="Send a slow, thoughtful message…" aria-label="Chat message" disabled>
@@ -294,6 +306,15 @@
             <button data-emoji="👏" type="button">👏</button>
             <button data-emoji="💤" type="button">💤</button>
             <button data-emoji="🌿" type="button">🌿</button>
+          </div>
+        </div>
+        <div style="position:relative; display:none;" id="roomKnockWrap">
+          <button class="ctrl-btn" id="roomKnockBtn" type="button" title="Waiting to join / invite more people">🔔</button>
+          <div class="knock-pop" id="roomKnockPop" style="display:none;">
+            <h5>Waiting to join</h5>
+            <div id="roomRequestList"></div>
+            <p class="empty-note" id="roomEmptyNote">Nobody's knocking right now.</p>
+            <button class="btn btn-ghost btn-sm" id="roomCopyLinkBtn" type="button" style="margin-top:10px;">Copy invite link</button>
           </div>
         </div>
         <button class="send" id="chatSendBtn" type="button" disabled>Send</button>
@@ -354,24 +375,42 @@
   function pickWord(){ return WORDS[Math.floor(Math.random()*WORDS.length)]; }
   function makeCode(){ return pickWord() + "-" + pickWord() + "-" + Math.floor(100 + Math.random()*900); }
  
-  var state = {
-    role: null,
-    myPeer: null,
-    myId: null,
-    myName: '',
-    peerName: '',
-    dataConn: null,
-    mediaCall: null,
-    localStream: null,
-    micOn: true,
-    startTime: null,
-    clockInterval: null,
-    pendingConns: {} // for host: connId -> {conn, name}
-  };
+  // Host + guests. Audio is a full mesh, so keep the cap modest.
+  var MAX_MEMBERS = 8;
+ 
+  // Message kinds
+  var CHAT = 'SNAIL_CHAT', REACT = 'SNAIL_REACT';
+  var CHAT_FROM = 'CHAT_FROM', REACT_FROM = 'REACT_FROM';
+  var ADMIT = 'ADMIT', DECLINE = 'DECLINE', JOINED = 'JOINED', LEFT = 'LEFT';
+ 
+  function freshState(){
+    return {
+      role: null,
+      myPeer: null,
+      myId: null,
+      myName: '',
+      hostConn: null,     // guest only: data connection to the host
+      localStream: null,
+      silentStream: null,
+      audioCtx: null,
+      micPromise: null,
+      micOn: true,
+      inRoom: false,
+      declined: false,
+      startTime: null,
+      clockInterval: null,
+      pending: {},        // host only: peerId -> { conn, name }
+      members: {},        // peerId -> { name, conn (host only) }
+      calls: {}           // peerId -> MediaConnection
+    };
+  }
+  var state = freshState();
+ 
+  function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
  
   function getLocalAudio(dotEl, textEl){
     if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
-      dotEl.className = 'status-dot err'; textEl.textContent = "This browser can't access a microphone — continuing as text-only.";
+      dotEl.className = 'status-dot err'; textEl.textContent = "This browser can't access a microphone — you'll listen and chat only.";
       return Promise.resolve(null);
     }
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
@@ -379,12 +418,26 @@
       dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.';
       return stream;
     }).catch(function(){
-      dotEl.className = 'status-dot err'; textEl.textContent = 'No microphone access — continuing as text-only.';
+      dotEl.className = 'status-dot err'; textEl.textContent = "No microphone access — you'll listen and chat only.";
       return null;
     });
   }
  
-  function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  // People without a mic still need to place calls (PeerJS needs a stream), so
+  // they send a silent one and just listen.
+  function outStream(){
+    if(state.localStream) return state.localStream;
+    if(state.silentStream) return state.silentStream;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    try{
+      state.audioCtx = new AC();
+      state.silentStream = state.audioCtx.createMediaStreamDestination().stream;
+    }catch(e){ return null; }
+    return state.silentStream;
+  }
+ 
+  function countMembers(){ return Object.keys(state.members).length; }
  
   /* ---------- Landing ---------- */
   document.getElementById('startMeetingBtn').addEventListener('click', function(){
@@ -411,6 +464,53 @@
     }
   }
  
+  /* ---------- Calls (audio mesh) ---------- */
+  function attachAudio(id, stream){
+    var container = document.getElementById('remoteAudioContainer');
+    var el = document.getElementById('audio-' + id);
+    if(!el){
+      el = document.createElement('audio');
+      el.id = 'audio-' + id;
+      el.autoplay = true;
+      el.setAttribute('playsinline', '');
+      container.appendChild(el);
+    }
+    el.srcObject = stream;
+    var p = el.play(); if(p && p.catch){ p.catch(function(){}); }
+  }
+  function removeAudio(id){
+    var el = document.getElementById('audio-' + id);
+    if(el){ el.srcObject = null; el.remove(); }
+  }
+  function wireCall(call){
+    var id = call.peer;
+    state.calls[id] = call;
+    call.on('stream', function(remote){ attachAudio(id, remote); });
+    call.on('close', function(){
+      removeAudio(id);
+      if(state.calls[id] === call){ delete state.calls[id]; }
+    });
+    call.on('error', function(){ removeAudio(id); });
+  }
+  function callPeer(id){
+    if(!state.myPeer || state.calls[id] || id === state.myId) return;
+    var stream = outStream();
+    if(!stream) return;
+    wireCall(state.myPeer.call(id, stream));
+  }
+  function dropCall(id){
+    if(state.calls[id]){ try{ state.calls[id].close(); }catch(e){} delete state.calls[id]; }
+    removeAudio(id);
+  }
+  function wireIncomingCalls(peer){
+    peer.on('call', function(call){
+      // Only answer once we're in the meeting; the host also checks the caller was admitted.
+      if(!state.inRoom || (state.role === 'host' && !state.members[call.peer])){ call.close(); return; }
+      call.answer(outStream() || undefined);
+      wireCall(call);
+    });
+  }
+ 
   /* ---------- HOST ---------- */
   function resetHostView(){
     document.getElementById('hostCodeDisplay').style.display = 'none';
@@ -422,106 +522,157 @@
     document.getElementById('hostSetupStatusText').textContent = 'Setting up your meeting…';
   }
  
-  function beginHosting(attemptsLeft){
+  function beginHosting(attemptsLeft, retryName){
     if(attemptsLeft === undefined) attemptsLeft = 5;
     state.role = 'host';
-    state.myName = document.getElementById('hostNameInput').value.trim() || 'Host';
+    state.myName = retryName || document.getElementById('hostNameInput').value.trim() || 'Host';
     var code = makeCode();
-    var micDot = document.getElementById('hostMicStatusDot');
-    var micText = document.getElementById('hostMicStatusText');
     var setupDot = document.getElementById('hostSetupStatusDot');
     var setupText = document.getElementById('hostSetupStatusText');
  
-    getLocalAudio(micDot, micText); // fire and forget; state.localStream fills in when ready
+    if(!state.micPromise){
+      state.micPromise = getLocalAudio(document.getElementById('hostMicStatusDot'), document.getElementById('hostMicStatusText'));
+    }
  
     var peer = new Peer(code);
     state.myPeer = peer;
  
     peer.on('open', function(id){
       state.myId = id;
+      state.members[id] = { name: state.myName, conn: null };
       document.getElementById('hostCodeValue').textContent = id;
       document.getElementById('hostCodeDisplay').style.display = 'block';
       document.getElementById('waitingRoom').style.display = 'block';
       setupDot.className = 'status-dot ok';
-      setupText.textContent = 'Meeting is live. Share the code above.';
+      setupText.textContent = 'Meeting is live. Share the code above — up to ' + MAX_MEMBERS + ' people, including you.';
       window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(id);
+      renderRoster();
     });
  
     peer.on('error', function(err){
       if(err && err.type === 'unavailable-id' && attemptsLeft > 0){
-        beginHosting(attemptsLeft - 1);
+        try{ peer.destroy(); }catch(e){}
+        beginHosting(attemptsLeft - 1, state.myName);
         return;
       }
       setupDot.className = 'status-dot err';
       setupText.textContent = 'Could not set up the meeting (' + (err && err.type ? err.type : 'connection error') + '). Try again.';
     });
  
+    wireIncomingCalls(peer);
+ 
     peer.on('connection', function(conn){
-      var name = (conn.metadata && conn.metadata.name) ? conn.metadata.name : 'Someone';
-      state.pendingConns[conn.peer] = { conn: conn, name: name };
+      var id = conn.peer;
+      var name = (conn.metadata && conn.metadata.name) ? String(conn.metadata.name).slice(0, 24) : 'Someone';
+ 
+      if(countMembers() >= MAX_MEMBERS){
+        conn.on('open', function(){
+          try{ conn.send({ kind: DECLINE, reason: 'full' }); }catch(e){}
+          setTimeout(function(){ try{ conn.close(); }catch(e){} }, 150);
+        });
+        return;
+      }
+ 
+      state.pending[id] = { conn: conn, name: name };
       renderRequests();
+ 
+      conn.on('data', function(data){ handleHostData(id, data); });
       conn.on('close', function(){
-        delete state.pendingConns[conn.peer];
-        renderRequests();
+        if(state.pending[id]){ delete state.pending[id]; renderRequests(); }
+        if(state.members[id]){ removeMember(id); }
       });
     });
   }
  
-  function renderRequests(){
-    var list = document.getElementById('requestList');
-    var emptyNote = document.getElementById('emptyRequestNote');
-    var ids = Object.keys(state.pendingConns);
-    list.innerHTML = '';
-    emptyNote.style.display = ids.length ? 'none' : 'block';
-    ids.forEach(function(id){
-      var entry = state.pendingConns[id];
-      var row = document.createElement('div');
-      row.className = 'request-item';
-      row.innerHTML =
-        '<span class="rq-name">🐚 ' + escapeHtml(entry.name) + '</span>' +
-        '<span class="request-actions"><button class="admit-btn" type="button">Allow</button><button class="decline-btn" type="button">Decline</button></span>';
-      row.querySelector('.admit-btn').addEventListener('click', function(){ admitGuest(id); });
-      row.querySelector('.decline-btn').addEventListener('click', function(){ declineGuest(id); });
-      list.appendChild(row);
+  function broadcast(obj, exceptId){
+    Object.keys(state.members).forEach(function(id){
+      var m = state.members[id];
+      if(id === state.myId || id === exceptId || !m.conn || !m.conn.open) return;
+      try{ m.conn.send(obj); }catch(e){}
     });
+  }
+ 
+  function handleHostData(id, data){
+    var m = state.members[id];
+    if(!m || !data || !data.kind) return; // ignore anyone who hasn't been let in
+    if(data.kind === CHAT && typeof data.text === 'string'){
+      var text = data.text.slice(0, 2000);
+      addChatLine(m.name, text, false);
+      broadcast({ kind: CHAT_FROM, id: id, name: m.name, text: text }, id);
+    } else if(data.kind === REACT && typeof data.emoji === 'string'){
+      var emoji = data.emoji.slice(0, 4);
+      spawnFloatEmoji(emoji, false);
+      broadcast({ kind: REACT_FROM, id: id, name: m.name, emoji: emoji }, id);
+    }
+  }
+ 
+  function removeMember(id){
+    var m = state.members[id];
+    if(!m) return;
+    delete state.members[id];
+    dropCall(id);
+    broadcast({ kind: LEFT, id: id, name: m.name });
+    addSystemChatLine(m.name + ' has left the meeting.');
+    renderRoster();
+  }
+ 
+  // Renders the request list in both the host setup card and the in-room bell.
+  function renderRequests(){
+    var ids = Object.keys(state.pending);
+    var targets = [
+      { list: document.getElementById('requestList'), note: document.getElementById('emptyRequestNote') },
+      { list: document.getElementById('roomRequestList'), note: document.getElementById('roomEmptyNote') }
+    ];
+    targets.forEach(function(t){
+      t.list.innerHTML = '';
+      t.note.style.display = ids.length ? 'none' : 'block';
+      ids.forEach(function(id){
+        var entry = state.pending[id];
+        var row = document.createElement('div');
+        row.className = 'request-item';
+        row.innerHTML =
+          '<span class="rq-name">🐚 <span class="rq-text"></span></span>' +
+          '<span class="request-actions"><button class="admit-btn" type="button">Allow</button><button class="decline-btn" type="button">Decline</button></span>';
+        row.querySelector('.rq-text').textContent = entry.name;
+        row.querySelector('.admit-btn').addEventListener('click', function(){ admitGuest(id); });
+        row.querySelector('.decline-btn').addEventListener('click', function(){ declineGuest(id); });
+        t.list.appendChild(row);
+      });
+    });
+    var bell = document.getElementById('roomKnockBtn');
+    if(ids.length){ bell.classList.add('has-badge'); bell.setAttribute('data-badge', String(ids.length)); }
+    else { bell.classList.remove('has-badge'); bell.removeAttribute('data-badge'); }
   }
  
   function admitGuest(peerId){
-    var entry = state.pendingConns[peerId];
+    var entry = state.pending[peerId];
     if(!entry) return;
-    Object.keys(state.pendingConns).forEach(function(otherId){
-      if(otherId !== peerId){ declineGuest(otherId); }
-    });
-    state.dataConn = entry.conn;
-    state.peerName = entry.name;
-    delete state.pendingConns[peerId];
-    wireDataConnection(state.dataConn);
-    state.dataConn.send({ kind: 'ADMIT' });
+    if(countMembers() >= MAX_MEMBERS){ declineGuest(peerId, 'full'); return; }
+    delete state.pending[peerId];
  
-    if(state.localStream){
-      var call = state.myPeer.call(peerId, state.localStream, { metadata: { name: state.myName } });
-      wireMediaCall(call);
-    } else {
-      state.myPeer.on('call', function(call){ call.close(); }); // nothing to send; guest may still call us
-    }
-    onConnected();
+    var roster = Object.keys(state.members).map(function(mid){ return { id: mid, name: state.members[mid].name }; });
+    try{ entry.conn.send({ kind: ADMIT, hostName: state.myName, roster: roster }); }catch(e){}
+    broadcast({ kind: JOINED, id: peerId, name: entry.name }); // tell everyone already in
+ 
+    state.members[peerId] = { name: entry.name, conn: entry.conn };
+    addSystemChatLine(entry.name + ' has arrived, unhurried as ever.');
+    renderRoster();
+    renderRequests();
+    if(!state.inRoom){ enterRoom(); }
   }
  
-  function declineGuest(peerId){
-    var entry = state.pendingConns[peerId];
+  function declineGuest(peerId, reason){
+    var entry = state.pending[peerId];
     if(!entry) return;
-    try{ entry.conn.send({ kind: 'DECLINE' }); }catch(e){}
+    try{ entry.conn.send({ kind: DECLINE, reason: reason || 'declined' }); }catch(e){}
     setTimeout(function(){ try{ entry.conn.close(); }catch(e){} }, 150);
-    delete state.pendingConns[peerId];
+    delete state.pending[peerId];
     renderRequests();
   }
  
-  document.getElementById('copyCodeBtn').addEventListener('click', function(){
-    copyToClipboard(state.myId || '', this);
-  });
-  document.getElementById('copyLinkBtn').addEventListener('click', function(){
-    copyToClipboard(window._snailInviteLink || '', this);
-  });
+  document.getElementById('copyCodeBtn').addEventListener('click', function(){ copyToClipboard(state.myId || '', this); });
+  document.getElementById('copyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
+  document.getElementById('roomCopyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
  
   /* ---------- GUEST ---------- */
   function resetGuestView(){
@@ -538,33 +689,28 @@
     if(!code){ alert('Enter the meeting code first.'); return; }
     state.role = 'guest';
     state.myName = document.getElementById('guestNameInput').value.trim() || 'Guest';
+    state.declined = false;
     document.getElementById('guestStep1').style.display = 'none';
     document.getElementById('guestStep2').style.display = 'block';
  
-    var micDot = document.getElementById('guestMicStatusDot');
-    var micText = document.getElementById('guestMicStatusText');
     var knockDot = document.getElementById('guestKnockStatusDot');
     var knockText = document.getElementById('guestKnockStatusText');
  
-    getLocalAudio(micDot, micText);
+    state.micPromise = getLocalAudio(document.getElementById('guestMicStatusDot'), document.getElementById('guestMicStatusText'));
  
     var peer = new Peer();
     state.myPeer = peer;
+    wireIncomingCalls(peer);
  
-    peer.on('open', function(){
+    peer.on('open', function(id){
+      state.myId = id;
       var conn = peer.connect(code, { metadata: { name: state.myName }, reliable: true });
-      state.dataConn = conn;
-      wireDataConnection(conn);
+      state.hostConn = conn;
+      wireGuestConnection(conn, code);
       conn.on('open', function(){
         knockDot.className = 'status-dot ok';
         knockText.textContent = "You're through the door — waiting for the host to tap Allow…";
       });
-    });
- 
-    peer.on('call', function(call){
-      state.mediaCall = call;
-      call.answer(state.localStream || undefined);
-      wireMediaCall(call);
     });
  
     peer.on('error', function(err){
@@ -577,97 +723,99 @@
     });
   });
  
-  /* ---------- Shared data connection wiring ---------- */
-  var CHAT = 'SNAIL_CHAT', REACT = 'SNAIL_REACT', ADMIT = 'ADMIT', DECLINE = 'DECLINE';
- 
-  function wireDataConnection(conn){
+  function wireGuestConnection(conn, hostId){
     conn.on('data', function(data){
       if(!data || !data.kind) return;
-      if(data.kind === ADMIT){
-        if(state.role === 'guest'){ onConnected(); }
-      } else if(data.kind === DECLINE){
-        document.getElementById('guestKnockStatusDot').className = 'status-dot err';
-        document.getElementById('guestKnockStatusText').textContent = "The host wasn't able to let you in this time.";
-      } else if(data.kind === CHAT){
-        addChatLine(state.peerName || 'Peer', data.text, false);
-      } else if(data.kind === REACT){
-        spawnFloatEmoji(data.emoji, false);
+      switch(data.kind){
+        case ADMIT:
+          state.members = {};
+          (data.roster || []).forEach(function(r){ state.members[r.id] = { name: String(r.name || 'Guest') }; });
+          state.members[state.myId] = { name: state.myName };
+          if(!state.members[hostId]){ state.members[hostId] = { name: data.hostName || 'Host' }; }
+          enterRoom();
+          // Call everyone who was already here; they answer, so each pair connects once.
+          (state.micPromise || Promise.resolve()).then(function(){
+            (data.roster || []).forEach(function(r){ callPeer(r.id); });
+          });
+          break;
+        case DECLINE:
+          state.declined = true;
+          document.getElementById('guestKnockStatusDot').className = 'status-dot err';
+          document.getElementById('guestKnockStatusText').textContent =
+            data.reason === 'full' ? 'This meeting is full right now.' : "The host wasn't able to let you in this time.";
+          break;
+        case JOINED:
+          if(!state.inRoom) break;
+          state.members[data.id] = { name: String(data.name || 'Guest') };
+          addSystemChatLine(state.members[data.id].name + ' has arrived, unhurried as ever.');
+          renderRoster();
+          break;
+        case LEFT:
+          if(!state.inRoom) break;
+          var gone = state.members[data.id];
+          delete state.members[data.id];
+          dropCall(data.id);
+          addSystemChatLine((gone ? gone.name : (data.name || 'Someone')) + ' has left the meeting.');
+          renderRoster();
+          break;
+        case CHAT_FROM:
+          if(state.inRoom && typeof data.text === 'string'){ addChatLine(String(data.name || 'Guest'), data.text, false); }
+          break;
+        case REACT_FROM:
+          if(state.inRoom && typeof data.emoji === 'string'){ spawnFloatEmoji(data.emoji.slice(0, 4), false); }
+          break;
       }
     });
     conn.on('close', function(){
-      if(views.room.classList.contains('active')){
-        document.getElementById('roomStatus').textContent = 'peer disconnected';
+      if(state.inRoom){
+        addSystemChatLine('The host has ended the meeting.');
+        document.getElementById('roomStatus').textContent = 'meeting ended';
         document.getElementById('chatInput').disabled = true;
         document.getElementById('chatSendBtn').disabled = true;
+        Object.keys(state.calls).forEach(dropCall);
+      } else if(!state.declined){
+        document.getElementById('guestKnockStatusDot').className = 'status-dot err';
+        document.getElementById('guestKnockStatusText').textContent = 'The connection to the host closed.';
       }
     });
-    if(state.role === 'guest'){
-      conn.metadata = conn.metadata || {};
-      state.peerName = state.peerName; // host name arrives via metadata below once host admits (see ADMIT flow uses conn already open)
-    }
-  }
- 
-  function wireMediaCall(call){
-    call.on('stream', function(remoteStream){
-      var audioEl = document.getElementById('remoteAudio');
-      audioEl.srcObject = remoteStream;
-    });
-  }
- 
-  function sendData(obj){
-    if(state.dataConn && state.dataConn.open){ state.dataConn.send(obj); }
   }
  
   /* ---------- Room ---------- */
-  function onConnected(){
-    // Guest learns host's name from connection metadata isn't available on guest side by default,
-    // so we exchange names as the first chat-channel message.
-    sendData({ kind: 'SNAIL_HELLO', name: state.myName });
- 
+  function enterRoom(){
+    state.inRoom = true;
     document.getElementById('roomTitleText').textContent = 'Meeting room';
-    document.getElementById('roomStatus').textContent = 'connected';
     document.getElementById('chatInput').disabled = false;
     document.getElementById('chatSendBtn').disabled = false;
     document.getElementById('chatMessages').innerHTML = '';
+    document.getElementById('roomKnockWrap').style.display = state.role === 'host' ? 'block' : 'none';
     renderRoster();
+    renderRequests();
     addSystemChatLine("You're connected — straight from browser to browser.");
     state.startTime = Date.now();
     clearInterval(state.clockInterval);
     state.clockInterval = setInterval(updateClock, 1000);
     updateClock();
     showView('room');
- 
-    if(state.role === 'guest' && state.localStream && !state.mediaCall){
-      // guest already answers incoming calls in peer.on('call'); nothing else needed here.
-    }
   }
- 
-  // Patch data handler to also catch SNAIL_HELLO (added after initial wireDataConnection was authored)
-  var originalWire = wireDataConnection;
-  wireDataConnection = function(conn){
-    originalWire(conn);
-    conn.on('data', function(data){
-      if(data && data.kind === 'SNAIL_HELLO'){
-        state.peerName = data.name || (state.role === 'host' ? 'Guest' : 'Host');
-        renderRoster();
-        addSystemChatLine(state.peerName + ' has arrived, unhurried as ever.');
-      }
-    });
-  };
  
   function renderRoster(){
     var list = document.getElementById('rosterList');
     list.innerHTML = '';
-    var me = document.createElement('div');
-    me.className = 'roster-item';
-    me.innerHTML = '<span class="emoji">🐌</span><div><div class="rname">' + escapeHtml(state.myName || 'You') + ' (you)</div><div class="rstatus">here</div></div>';
-    list.appendChild(me);
-    if(state.peerName){
-      var peerEl = document.createElement('div');
-      peerEl.className = 'roster-item';
-      peerEl.innerHTML = '<span class="emoji">🐚</span><div><div class="rname">' + escapeHtml(state.peerName) + '</div><div class="rstatus">connected</div></div>';
-      list.appendChild(peerEl);
-    }
+    var ids = Object.keys(state.members);
+    // You first, then everyone else in join order.
+    ids.sort(function(a, b){ return (a === state.myId ? -1 : 0) - (b === state.myId ? -1 : 0); });
+    ids.forEach(function(id){
+      var m = state.members[id];
+      var isMe = id === state.myId;
+      var isHost = state.role === 'host' ? isMe : id === (state.hostConn && state.hostConn.peer);
+      var el = document.createElement('div');
+      el.className = 'roster-item';
+      el.innerHTML = '<span class="emoji">' + (isMe ? '🐌' : '🐚') + '</span><div><div class="rname"></div><div class="rstatus"></div></div>';
+      el.querySelector('.rname').textContent = m.name + (isMe ? ' (you)' : '');
+      el.querySelector('.rstatus').textContent = isHost ? 'host' : 'connected';
+      list.appendChild(el);
+    });
+    document.getElementById('roomStatus').textContent = 'connected · ' + ids.length + ' here';
   }
  
   function updateClock(){
@@ -703,9 +851,13 @@
   function sendChat(){
     var input = document.getElementById('chatInput');
     var val = input.value.trim();
-    if(!val) return;
-    addChatLine((state.myName || 'You') + ' (you)', val, true);
-    sendData({ kind: CHAT, text: val });
+    if(!val || !state.inRoom) return;
+    addChatLine(state.myName + ' (you)', val, true);
+    if(state.role === 'host'){
+      broadcast({ kind: CHAT_FROM, id: state.myId, name: state.myName, text: val });
+    } else if(state.hostConn && state.hostConn.open){
+      state.hostConn.send({ kind: CHAT, text: val });
+    }
     input.value = '';
   }
  
@@ -716,13 +868,24 @@
     b.addEventListener('click', function(){
       var emoji = b.getAttribute('data-emoji');
       spawnFloatEmoji(emoji, true);
-      sendData({ kind: REACT, emoji: emoji });
+      if(state.role === 'host'){
+        broadcast({ kind: REACT_FROM, id: state.myId, name: state.myName, emoji: emoji });
+      } else if(state.hostConn && state.hostConn.open){
+        state.hostConn.send({ kind: REACT, emoji: emoji });
+      }
       reactionsPop.style.display = 'none';
     });
   });
+ 
+  var roomKnockBtn = document.getElementById('roomKnockBtn');
+  var roomKnockPop = document.getElementById('roomKnockPop');
+  roomKnockBtn.addEventListener('click', function(){ roomKnockPop.style.display = roomKnockPop.style.display === 'block' ? 'none' : 'block'; });
+ 
   document.addEventListener('click', function(e){
     if(!reactionsPop.contains(e.target) && e.target !== reactBtn){ reactionsPop.style.display = 'none'; }
+    if(!roomKnockPop.contains(e.target) && e.target !== roomKnockBtn){ roomKnockPop.style.display = 'none'; }
   });
+ 
   function spawnFloatEmoji(emoji, fromSelf){
     var zone = document.getElementById('chatMessages');
     var el = document.createElement('div');
@@ -769,25 +932,27 @@
   document.getElementById('leaveBtn').addEventListener('click', function(){
     var secs = state.startTime ? Math.floor((Date.now() - state.startTime)/1000) : 0;
     var m = Math.floor(secs/60), s = secs%60;
+    var wasHost = state.role === 'host';
     teardown();
     document.getElementById('endedSummary').textContent =
-      "That was " + (m>0 ? m+"m " : "") + s + "s of unhurried conversation. Nicely paced.";
+      "That was " + (m>0 ? m+"m " : "") + s + "s of unhurried conversation." + (wasHost ? " Since you hosted, the meeting ended for everyone." : "") + " Nicely paced.";
     showView('ended');
   });
  
   function teardown(){
     clearInterval(state.clockInterval);
-    if(state.dataConn){ try{ state.dataConn.close(); }catch(e){} }
-    if(state.mediaCall){ try{ state.mediaCall.close(); }catch(e){} }
+    Object.keys(state.calls).forEach(function(id){ try{ state.calls[id].close(); }catch(e){} });
+    Object.keys(state.members).forEach(function(id){ var c = state.members[id].conn; if(c){ try{ c.close(); }catch(e){} } });
+    Object.keys(state.pending).forEach(function(id){ try{ state.pending[id].conn.close(); }catch(e){} });
+    if(state.hostConn){ try{ state.hostConn.close(); }catch(e){} }
     if(state.myPeer){ try{ state.myPeer.destroy(); }catch(e){} }
     if(state.localStream){ try{ state.localStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} }
-    var remoteAudioEl = document.getElementById('remoteAudio');
-    if(remoteAudioEl){ remoteAudioEl.srcObject = null; }
-    state = {
-      role: null, myPeer: null, myId: null, myName: '', peerName: '',
-      dataConn: null, mediaCall: null, localStream: null, micOn: true,
-      startTime: null, clockInterval: null, pendingConns: {}
-    };
+    if(state.audioCtx){ try{ state.audioCtx.close(); }catch(e){} }
+    document.getElementById('remoteAudioContainer').innerHTML = '';
+    document.getElementById('requestList').innerHTML = '';
+    document.getElementById('roomRequestList').innerHTML = '';
+    document.getElementById('roomKnockBtn').classList.remove('has-badge');
+    state = freshState();
     micToggleBtn.textContent = '🎙️';
     micToggleBtn.classList.remove('is-off');
   }
