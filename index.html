@@ -8,25 +8,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   :root{
-    --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e;
-    --leaf-500:#7c9a5b; --leaf-100:#e4ecd7;
+    --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e; --moss-700:#34482a;
+    --leaf-500:#7c9a5b; --leaf-300:#b8cf98; --leaf-100:#e4ecd7;
     --cream-100:#f5efdd; --cream-050:#faf6ea;
     --shell-500:#c17a44; --shell-600:#a5622f; --gold-400:#d9a441;
     --ink-900:#181f11; --ink-700:#3a4530;
+ 
     --bg: var(--cream-050); --bg-alt: var(--cream-100);
-    --surface:#ffffff;
+    --surface:#ffffff; --surface-2: var(--leaf-100);
     --text: var(--ink-900); --text-muted: var(--ink-700);
     --border: rgba(24,31,17,0.12);
-    --accent: var(--shell-500); --accent-ink:#ffffff;
-    --danger:#b9503a; --ok:#6a9a4f;
+    --accent: var(--shell-500); --accent-ink:#ffffff; --leaf: var(--leaf-500);
+    --danger:#b9503a;
     --shadow: 0 1px 2px rgba(17,25,14,0.06), 0 8px 24px rgba(17,25,14,0.08);
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg: var(--moss-950); --bg-alt: var(--moss-900);
-      --surface: var(--moss-900);
+      --surface: var(--moss-900); --surface-2: var(--moss-800);
       --text: var(--cream-050); --text-muted: rgba(245,239,221,0.66);
       --border: rgba(245,239,221,0.14);
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
@@ -34,7 +36,7 @@
   }
   :root[data-theme="dark"]{
     --bg: var(--moss-950); --bg-alt: var(--moss-900);
-    --surface: var(--moss-900);
+    --surface: var(--moss-900); --surface-2: var(--moss-800);
     --text: var(--cream-050); --text-muted: rgba(245,239,221,0.66);
     --border: rgba(245,239,221,0.14);
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
@@ -44,20 +46,27 @@
   body{margin:0; background:var(--bg); color:var(--text); font-family:'Work Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased;}
   h1,h2,h3,.brand{font-family:'Baloo 2','Work Sans',sans-serif; font-weight:700; letter-spacing:-0.01em; margin:0;}
   button{font-family:inherit; cursor:pointer;}
+  code, .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
   ::selection{background:var(--gold-400); color:var(--ink-900);}
-  button:focus-visible, input:focus-visible{outline:3px solid var(--gold-400); outline-offset:2px; border-radius:4px;}
-  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+    outline:3px solid var(--gold-400); outline-offset:2px; border-radius:4px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
+ 
   .view{display:none; min-height:100vh;}
   .view.active{display:block;}
+ 
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:22px clamp(20px,5vw,56px); max-width:1180px; margin:0 auto;}
   .brandmark{display:flex; align-items:center; gap:10px;}
   .brandmark span.brand{font-size:1.28rem;}
   .theme-toggle{background:var(--surface); border:1px solid var(--border); color:var(--text-muted); border-radius:999px; padding:8px 14px; font-size:.82rem; font-weight:600; display:flex; align-items:center; gap:6px;}
+ 
   .hero{max-width:880px; margin:0 auto; padding: clamp(24px,6vw,56px) clamp(20px,5vw,56px) 10px; text-align:center;}
   .hero .eyebrow{color:var(--leaf-500); font-weight:600; font-size:.95rem; margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:8px;}
   .hero h1{font-size:clamp(2.1rem,5vw,3.1rem); line-height:1.08;}
   .hero h1 em{font-style:normal; color:var(--accent);}
   .hero p.lede{margin:16px auto 0; font-size:1.06rem; line-height:1.6; color:var(--text-muted); max-width:52ch;}
+ 
   .btn{border:none; border-radius:14px; padding:14px 22px; font-size:1rem; font-weight:600; display:inline-flex; align-items:center; gap:10px; transition:transform .15s ease, background .2s ease;}
   .btn:active{transform:translateY(1px);}
   .btn-primary{background:var(--accent); color:var(--accent-ink); box-shadow:0 6px 18px rgba(161,90,45,.28);}
@@ -66,34 +75,47 @@
   .btn-ghost:hover{border-color:var(--accent); color:var(--accent);}
   .btn-sm{padding:9px 14px; font-size:.86rem; border-radius:11px;}
   .btn[disabled]{opacity:.5; cursor:not-allowed;}
-  .btn-allow{background:var(--ok); color:#fff;}
-  .btn-allow:hover{background:#5a8843;}
+ 
   .cta-row{margin-top:30px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center;}
-  .card{max-width:640px; margin:0 auto; background:var(--surface); border:1px solid var(--border); border-radius:22px; padding:30px; box-shadow:var(--shadow);}
+ 
+  .card{max-width:600px; margin:0 auto; background:var(--surface); border:1px solid var(--border); border-radius:22px; padding:30px; box-shadow:var(--shadow);}
+  .card + .card{margin-top:20px;}
   .card h2{font-size:1.3rem;}
   .card .sub{color:var(--text-muted); font-size:.92rem; margin-top:6px; line-height:1.55;}
   .field{margin-top:18px;}
   .field label{display:block; font-size:.82rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;}
-  .field input{width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg); color:var(--text); font-size:.94rem;}
-  .code-display{background:var(--bg-alt); border:1.5px dashed var(--border); border-radius:14px; padding:16px; text-align:center; margin-top:14px;}
-  .code-display .code{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:1.6rem; font-weight:700; letter-spacing:.08em;}
-  .copy-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; justify-content:center;}
+  .field input{
+    width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:.94rem;
+  }
+  .code-display{
+    background:var(--bg-alt); border:1.5px dashed var(--border); border-radius:14px; padding:18px;
+    text-align:center; margin-top:14px;
+  }
+  .code-display .code-value{font-family:'Baloo 2'; font-size:1.5rem; font-weight:700; letter-spacing:.02em; color:var(--accent); word-break:break-word;}
+  .copy-row{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;}
   .step-label{display:inline-flex; align-items:center; gap:8px; font-size:.78rem; font-weight:700; color:var(--leaf-500); text-transform:uppercase; letter-spacing:.04em;}
-  .status-line{margin-top:16px; font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .status-line{margin-top:16px; font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:8px;}
   .status-dot{width:8px; height:8px; border-radius:50%; background:var(--gold-400); flex-shrink:0;}
-  .status-dot.ok{background:var(--ok);}
+  .status-dot.ok{background:#6a9a4f;}
   .status-dot.err{background:var(--danger);}
-  .status-dot.pulse{animation:pulse-dot 1.6s ease-in-out infinite;}
+  .status-dot.pulse{animation:pulse-dot 1.4s ease-in-out infinite;}
   @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.3;}}
   .back-link{display:inline-block; margin-top:18px; font-size:.85rem; color:var(--text-muted); text-decoration:underline; background:none; border:none; cursor:pointer; padding:0;}
-  .knock-list{margin-top:20px; display:flex; flex-direction:column; gap:10px;}
-  .knock-empty{margin-top:20px; text-align:center; color:var(--text-muted); font-size:.88rem; padding:20px 10px; border:1.5px dashed var(--border); border-radius:14px;}
-  .knock-item{display:flex; align-items:center; gap:12px; background:var(--bg-alt); border:1px solid var(--border); border-radius:14px; padding:12px 14px;}
-  .knock-item .emoji{font-size:1.5rem;}
-  .knock-item .kname{font-weight:600; flex:1;}
-  .knock-item .kactions{display:flex; gap:8px;}
-  .spinner-shell{font-size:2.4rem; display:inline-block; animation:crawl 1.8s ease-in-out infinite;}
-  @keyframes crawl{0%,100%{transform:translateX(0);}50%{transform:translateX(8px);}}
+ 
+  .waiting-room{margin-top:22px; border-top:1px solid var(--border); padding-top:18px;}
+  .waiting-room h4{font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin:0 0 10px;}
+  .request-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--bg-alt); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:10px;
+  }
+  .request-item .rq-name{font-weight:600; display:flex; align-items:center; gap:8px;}
+  .request-actions{display:flex; gap:8px;}
+  .request-actions button{border:none; border-radius:10px; padding:8px 12px; font-size:.82rem; font-weight:600;}
+  .admit-btn{background:var(--leaf-500); color:#fff;}
+  .decline-btn{background:transparent; color:var(--text-muted); border:1px solid var(--border) !important;}
+  .empty-note{font-size:.85rem; color:var(--text-muted); font-style:italic;}
+ 
   .features{max-width:880px; margin:50px auto 0; padding:0 20px 50px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
   @media (max-width:700px){.features{grid-template-columns:1fr;}}
   .feature-card{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px;}
@@ -101,7 +123,8 @@
   .feature-card h3{font-size:1rem; margin-top:8px;}
   .feature-card p{margin:6px 0 0; color:var(--text-muted); font-size:.88rem; line-height:1.5;}
   .footer-strip{text-align:center; padding:20px 20px 50px; color:var(--text-muted); font-size:.82rem;}
-  .debug-box{margin-top:14px; padding:10px 12px; border-radius:10px; background:var(--bg-alt); border:1px solid var(--border); font-size:.78rem; color:var(--text-muted); font-family:ui-monospace,monospace; line-height:1.45; word-break:break-all;}
+ 
+  /* ---- ROOM ---- */
   #room{background:var(--moss-950); color:var(--cream-050); display:flex; flex-direction:column;}
   .room-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(245,239,221,0.14);}
   .room-title{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-size:1.05rem;}
@@ -110,44 +133,48 @@
   .roster{width:200px; flex-shrink:0; border-right:1px solid rgba(245,239,221,0.14); padding:16px; display:flex; flex-direction:column; gap:10px;}
   @media (max-width:640px){.roster{display:none;}}
   .roster h4{font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:rgba(245,239,221,0.5); margin:0 0 4px;}
-  .roster-item{display:flex; align-items:center; gap:10px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.1); border-radius:12px; padding:10px 12px;}
+  .roster-item{display:flex; align-items:center; gap:10px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.1); border-radius:12px; padding:10px 12px; position:relative;}
   .roster-item .emoji{font-size:1.3rem;}
   .roster-item .rname{font-size:.86rem; font-weight:600;}
   .roster-item .rstatus{font-size:.72rem; color:rgba(245,239,221,0.5);}
+ 
   .chat-col{flex:1; display:flex; flex-direction:column; min-width:0;}
   .chat-messages{flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:12px; position:relative;}
   .msg{max-width:70%;}
-  .msg .who{font-size:.72rem; color:rgba(245,239,221,0.5); margin-bottom:3px;}
+  .msg .who{font-size:.72rem; color:rgba(245,239,221,0.5); margin-bottom:3px; display:flex; align-items:center; gap:6px;}
   .msg .bubble{background:var(--moss-800); padding:10px 13px; border-radius:14px 14px 14px 4px; font-size:.92rem; line-height:1.45;}
   .msg.self{align-self:flex-end;}
-  .msg.self .who{text-align:right;}
+  .msg.self .who{justify-content:flex-end;}
   .msg.self .bubble{background:var(--accent); color:#fff; border-radius:14px 14px 4px 14px;}
   .msg.system{align-self:center; max-width:90%;}
   .msg.system .bubble{background:transparent; color:rgba(245,239,221,0.55); font-size:.78rem; font-style:italic; text-align:center;}
   .float-emoji{position:absolute; font-size:1.6rem; animation:float-up 2.2s ease-out forwards; pointer-events:none;}
   @keyframes float-up{0%{opacity:0; transform:translateY(0) scale(.6);}15%{opacity:1;}100%{opacity:0; transform:translateY(-80px) scale(1.2);}}
+ 
   .chat-input-row{padding:14px; border-top:1px solid rgba(245,239,221,0.14); display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .chat-input-row input{flex:1; min-width:140px; padding:11px 14px; border-radius:12px; border:1px solid rgba(245,239,221,0.14); background:var(--moss-800); color:var(--cream-050); font-size:.9rem;}
   .chat-input-row button.send{background:var(--accent); color:#fff; border:none; border-radius:12px; padding:0 16px; font-weight:600; height:42px;}
   .ctrl-btn{width:42px; height:42px; border-radius:50%; border:1px solid rgba(245,239,221,0.14); background:var(--moss-800); color:var(--cream-050); font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative;}
   .ctrl-btn.is-off{background:var(--danger); border-color:var(--danger); color:#fff;}
-  .ctrl-btn.has-badge::after{content:attr(data-badge); position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; font-size:.65rem; font-weight:700; border-radius:999px; min-width:16px; height:16px; padding:0 4px; display:flex; align-items:center; justify-content:center;}
-  .reactions-pop{position:absolute; bottom:52px; right:0; background:var(--moss-900); border:1px solid rgba(245,239,221,0.14); border-radius:14px; padding:8px; display:flex; gap:6px; box-shadow:0 8px 24px rgba(0,0,0,.4); z-index:5;}
+  .reactions-pop{position:absolute; bottom:52px; right:0; background:var(--moss-900); border:1px solid rgba(245,239,221,0.14); border-radius:14px; padding:8px; display:flex; gap:6px; box-shadow:0 8px 24px rgba(0,0,0,.4);}
   .reactions-pop button{background:none; border:none; font-size:1.3rem; padding:6px; border-radius:10px;}
   .reactions-pop button:hover{background:var(--moss-800);}
-  .knock-pop{position:absolute; bottom:52px; left:14px; width:280px; background:var(--moss-900); border:1px solid rgba(245,239,221,0.14); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.4); z-index:5;}
-  .knock-pop h5{margin:0 0 10px; font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:rgba(245,239,221,0.55);}
-  .knock-pop .knock-item{background:var(--moss-800); border-color:rgba(245,239,221,0.1);}
   .leave-btn{background:var(--danger); color:#fff; border:none; border-radius:22px; padding:0 18px; height:42px; font-weight:600; font-size:.88rem;}
+ 
   #ended{display:flex; align-items:center; justify-content:center; padding:32px 20px; text-align:center;}
   .ended-card{max-width:440px;}
   .ended-card .big-shell{font-size:3rem;}
   .ended-card h2{margin-top:14px; font-size:1.5rem;}
   .ended-card p{color:var(--text-muted); margin-top:10px; line-height:1.6;}
   .ended-card .btn{margin-top:22px;}
+ 
+  .pill{display:inline-flex; align-items:center; gap:6px; font-size:.72rem; background:var(--bg-alt); border:1px solid var(--border); color:var(--text-muted); padding:4px 10px; border-radius:999px;}
+  .note-box{margin-top:14px; font-size:.8rem; color:var(--text-muted); background:var(--bg-alt); border:1px solid var(--border); border-radius:12px; padding:12px 14px; line-height:1.5;}
 </style>
 </head>
 <body>
+ 
+<!-- ============ LANDING ============ -->
 <section id="landing" class="view active">
   <div class="topbar">
     <div class="brandmark">
@@ -160,90 +187,93 @@
     </div>
     <button class="theme-toggle" id="themeToggle" type="button"><span id="themeIcon">🌙</span><span id="themeLabel">Dusk mode</span></button>
   </div>
+ 
   <div class="hero">
-    <div class="eyebrow">🐌 <span>peer-to-peer · no server · no video</span></div>
+    <div class="eyebrow">🐌 <span>one code, one click, no video</span></div>
     <h1>Meetings that <em>take their time.</em></h1>
-    <p class="lede">Share a short code, someone knocks, you click Allow. Voice and text go straight between browsers.</p>
+    <p class="lede">Share one meeting code, and let people in with a single tap. Voice and text, browser to browser — no account, no camera, no hovering over a keyboard swapping codes back and forth.</p>
     <div class="cta-row">
       <button class="btn btn-primary" id="startMeetingBtn" type="button"><span aria-hidden="true">＋</span> Start a meeting</button>
       <button class="btn btn-ghost" id="joinMeetingBtn" type="button">Join with a code</button>
     </div>
   </div>
+ 
   <div class="features">
-    <div class="feature-card"><div class="ico">🚪</div><h3>Knock, then Allow</h3><p>Peers find each other automatically. You just click Allow.</p></div>
-    <div class="feature-card"><div class="ico">🎙️</div><h3>Voice, when you want it</h3><p>Mic-to-mic audio once you're both in. No camera.</p></div>
-    <div class="feature-card"><div class="ico">🔌</div><h3>No server to run</h3><p>Static files on GitHub Pages. Conversation stays peer-to-peer.</p></div>
+    <div class="feature-card"><div class="ico">🚪</div><h3>One click to let someone in</h3><p>Share your meeting code once. When someone knocks, you just tap Allow.</p></div>
+    <div class="feature-card"><div class="ico">🎙️</div><h3>Voice, when you want it</h3><p>Mic-to-mic audio once you're both in. No camera, ever — just talk.</p></div>
+    <div class="feature-card"><div class="ico">🔌</div><h3>Static-site friendly</h3><p>Ships as one HTML file — host it on GitHub Pages, no backend to run yourself.</p></div>
   </div>
-  <div class="footer-strip">Snail Meet Lite · knock, get let in, talk 🐌</div>
+  <div class="footer-strip">Snail Meet Lite · share a code, tap Allow, talk 🐌</div>
 </section>
-
+ 
+<!-- ============ HOST ============ -->
 <section id="hostView" class="view">
-  <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div></div>
-  <div class="card" id="hostSetupCard">
-    <span class="step-label">Host a meeting</span>
-    <h2 style="margin-top:8px;">Give it a name</h2>
-    <p class="sub">We'll generate a short code. Share it — they'll knock, you click Allow.</p>
+  <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Hosting</span></div>
+  <div class="card">
+    <span class="step-label">Your meeting code</span>
+    <h2 style="margin-top:8px;">Share this with the other person</h2>
+    <p class="sub">Send it however you like — chat, email, a slow pigeon. Once they enter it and knock, you'll see a request to let them in below.</p>
+ 
     <div class="field">
       <label for="hostNameInput">Your name</label>
       <input type="text" id="hostNameInput" placeholder="e.g. Shelly" maxlength="24">
     </div>
-    <button class="btn btn-primary" id="hostCreateBtn" type="button" style="margin-top:22px;">Create meeting</button>
-    <button class="back-link" id="hostBack1" type="button">← Back</button>
-  </div>
-  <div class="card" id="hostWaitingCard" style="display:none;">
-    <span class="step-label">Waiting room</span>
-    <h2 style="margin-top:8px;">Share this code</h2>
-    <p class="sub">Send it to whoever's joining. When they knock, click <strong>Allow</strong>.</p>
-    <div class="code-display"><div class="code" id="hostCodeText">…</div></div>
-    <div class="copy-row">
-      <button class="btn btn-ghost btn-sm" id="copyCodeBtn" type="button">Copy code</button>
-      <button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copy invite link</button>
+ 
+    <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone access…</span></div>
+    <div class="status-line"><span class="status-dot pulse" id="hostSetupStatusDot"></span><span id="hostSetupStatusText">Setting up your meeting…</span></div>
+ 
+    <div class="code-display" id="hostCodeDisplay" style="display:none;">
+      <div class="code-value" id="hostCodeValue"></div>
+      <div class="copy-row">
+        <button class="btn btn-ghost btn-sm" id="copyCodeBtn" type="button">Copy code</button>
+        <button class="btn btn-ghost btn-sm" id="copyLinkBtn" type="button">Copy invite link</button>
+      </div>
     </div>
-    <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone…</span></div>
-    <div class="status-line" style="margin-top:8px;"><span class="status-dot pulse" id="hostPeerDot"></span><span id="hostPeerText">Looking for peers…</span></div>
-    <div class="debug-box" id="hostDebug">Room: —</div>
-    <div id="hostKnockList"></div>
-    <button class="back-link" id="hostBack2" type="button">← Cancel meeting</button>
+ 
+    <div class="waiting-room" id="waitingRoom" style="display:none;">
+      <h4>Waiting to be let in</h4>
+      <div id="requestList"></div>
+      <p class="empty-note" id="emptyRequestNote">No one's knocked yet — this updates the moment they do.</p>
+    </div>
+ 
+    <button class="back-link" id="hostBackBtn" type="button">← Back</button>
   </div>
 </section>
-
+ 
+<!-- ============ GUEST ============ -->
 <section id="guestView" class="view">
-  <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div></div>
-  <div class="card" id="guestSetupCard">
+  <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Joining</span></div>
+  <div class="card" id="guestStep1">
     <span class="step-label">Join a meeting</span>
-    <h2 style="margin-top:8px;">Enter the code</h2>
+    <h2 style="margin-top:8px;">Enter the code you were sent</h2>
+    <p class="sub">Once you knock, the host just needs to tap Allow on their end.</p>
     <div class="field">
       <label for="guestNameInput">Your name</label>
       <input type="text" id="guestNameInput" placeholder="e.g. Turbo" maxlength="24">
     </div>
     <div class="field">
       <label for="guestCodeInput">Meeting code</label>
-      <input type="text" id="guestCodeInput" placeholder="e.g. moss42" autocomplete="off" spellcheck="false" autocapitalize="off">
+      <input type="text" id="guestCodeInput" placeholder="e.g. leaf-snug-dew" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
-    <button class="btn btn-primary" id="guestKnockBtn" type="button" style="margin-top:22px;">Knock</button>
-    <button class="back-link" id="guestBack1" type="button">← Back</button>
+    <button class="btn btn-primary" id="guestKnockBtn" type="button">Knock 🐌</button>
+    <button class="back-link" id="guestBackBtn" type="button">← Back</button>
   </div>
-  <div class="card" id="guestWaitingCard" style="display:none; text-align:center;">
-    <span class="spinner-shell">🐌</span>
-    <h2 style="margin-top:10px;">Waiting for host…</h2>
-    <p class="sub">Knocking. This updates when they Allow.</p>
-    <div class="status-line" style="justify-content:center;"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone…</span></div>
-    <div class="status-line" style="justify-content:center; margin-top:8px;"><span class="status-dot pulse" id="guestPeerDot"></span><span id="guestPeerText">Looking for host…</span></div>
-    <div class="debug-box" id="guestDebug" style="text-align:left;">Room: —</div>
-    <button class="back-link" id="guestBack2" type="button">← Cancel</button>
-  </div>
-  <div class="card" id="guestDeniedCard" style="display:none; text-align:center;">
-    <span class="spinner-shell" style="animation:none;">🐚</span>
-    <h2 style="margin-top:10px;" id="guestDeniedHeading">The host didn't let you in.</h2>
-    <p class="sub">Try knocking again, or check the code.</p>
-    <button class="btn btn-ghost" id="guestBack3" type="button" style="margin-top:16px;">← Back</button>
+ 
+  <div class="card" id="guestStep2" style="display:none;">
+    <span class="step-label">Waiting</span>
+    <h2 style="margin-top:8px;">Knocking…</h2>
+    <p class="sub">Sitting tight until the host lets you in. No need to do anything else.</p>
+    <div class="status-line"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone access…</span></div>
+    <div class="status-line"><span class="status-dot pulse" id="guestKnockStatusDot"></span><span id="guestKnockStatusText">Connecting to the meeting…</span></div>
+    <button class="back-link" id="guestBackBtn2" type="button">← Cancel</button>
   </div>
 </section>
-
+ 
+<!-- ============ ROOM ============ -->
 <section id="room" class="view">
   <div class="room-header">
     <div class="room-title"><span aria-hidden="true">🐌</span><span id="roomTitleText">Meeting room</span></div>
-    <div class="room-meta"><span id="roomStatus">connected</span><span id="roomClock">00:00</span></div>
+    <div class="room-meta"><span id="roomStatus">connecting…</span><span id="roomClock">00:00</span></div>
   </div>
   <div class="room-body">
     <div class="roster">
@@ -252,12 +282,12 @@
     </div>
     <div class="chat-col">
       <div class="chat-messages" id="chatMessages"></div>
-      <div id="remoteAudioContainer" style="display:none;"></div>
+      <audio id="remoteAudio" autoplay playsinline style="display:none;"></audio>
       <div class="chat-input-row">
-        <button class="ctrl-btn" id="micToggleBtn" type="button" title="Mute">🎙️</button>
-        <input type="text" id="chatInput" placeholder="Send a message…" aria-label="Chat" disabled>
+        <button class="ctrl-btn" id="micToggleBtn" type="button" title="Mute microphone">🎙️</button>
+        <input type="text" id="chatInput" placeholder="Send a slow, thoughtful message…" aria-label="Chat message" disabled>
         <div style="position:relative;">
-          <button class="ctrl-btn" id="reactBtn" type="button" title="Reaction">🥬</button>
+          <button class="ctrl-btn" id="reactBtn" type="button" title="Send a reaction">🥬</button>
           <div class="reactions-pop" id="reactionsPop" style="display:none;">
             <button data-emoji="🐌" type="button">🐌</button>
             <button data-emoji="🥬" type="button">🥬</button>
@@ -266,20 +296,14 @@
             <button data-emoji="🌿" type="button">🌿</button>
           </div>
         </div>
-        <div style="position:relative;" id="roomKnockWrap">
-          <button class="ctrl-btn" id="roomKnockBtn" type="button" title="Waiting">🔔</button>
-          <div class="knock-pop" id="roomKnockPop" style="display:none;">
-            <h5>Waiting to join</h5>
-            <div id="roomKnockList"></div>
-          </div>
-        </div>
         <button class="send" id="chatSendBtn" type="button" disabled>Send</button>
         <button class="leave-btn" id="leaveBtn" type="button">Leave 🚪</button>
       </div>
     </div>
   </div>
 </section>
-
+ 
+<!-- ============ ENDED ============ -->
 <section id="ended" class="view">
   <div class="ended-card">
     <span class="big-shell">🐌</span>
@@ -288,33 +312,32 @@
     <button class="btn btn-primary" id="backHomeBtn" type="button">Back to Snail Meet</button>
   </div>
 </section>
-
-<script type="module">
-import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqtt@0.25.4/+esm';
-
-(function () {
+ 
+<script>
+(function(){
   "use strict";
-
+ 
+  /* ---------- Theme ---------- */
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var themeIcon = document.getElementById('themeIcon');
   var themeLabel = document.getElementById('themeLabel');
   var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   var manualTheme = null;
-
-  function applyThemeLabel() {
+  function applyThemeLabel(){
     var isDark = manualTheme ? manualTheme === 'dark' : prefersDark;
     themeIcon.textContent = isDark ? '☀️' : '🌙';
     themeLabel.textContent = isDark ? 'Daylight mode' : 'Dusk mode';
   }
-  themeToggle.addEventListener('click', function () {
+  themeToggle.addEventListener('click', function(){
     var current = manualTheme ? manualTheme === 'dark' : prefersDark;
     manualTheme = current ? 'light' : 'dark';
     root.setAttribute('data-theme', manualTheme);
     applyThemeLabel();
   });
   applyThemeLabel();
-
+ 
+  /* ---------- View switching ---------- */
   var views = {
     landing: document.getElementById('landing'),
     hostView: document.getElementById('hostView'),
@@ -322,411 +345,340 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqt
     room: document.getElementById('room'),
     ended: document.getElementById('ended')
   };
-  function showView(name) {
-    Object.keys(views).forEach(function (k) {
-      views[k].classList.toggle('active', k === name);
-    });
-    window.scrollTo(0, 0);
+  function showView(name){
+    Object.keys(views).forEach(function(k){ views[k].classList.toggle('active', k === name); });
+    window.scrollTo(0,0);
   }
-
-  var APP_ID = 'snail-meet-gh-v5';
-  var ROOM_CONFIG = {
-    appId: APP_ID,
-    rtcConfig: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
-      ]
-    }
-  };
-  var WORDS = ["leaf","dew","moss","fern","snug","pond","shell","clover","hedge","petal","trail","burrow","meadow","drip","root","vine","seed","fog","rain","mud"];
-
-  function makeCode() {
-    var w = WORDS[Math.floor(Math.random() * WORDS.length)];
-    var num = Math.floor(10 + Math.random() * 90);
-    return (w + num).toLowerCase();
-  }
-
+ 
+  var WORDS = ["leaf","dew","moss","fern","snug","pond","shell","bramble","clover","drizzle","hedge","petal","thicket","burrow","meadow","trail"];
+  function pickWord(){ return WORDS[Math.floor(Math.random()*WORDS.length)]; }
+  function makeCode(){ return pickWord() + "-" + pickWord() + "-" + Math.floor(100 + Math.random()*900); }
+ 
   var state = {
     role: null,
-    room: null,
-    code: null,
+    myPeer: null,
+    myId: null,
     myName: '',
+    peerName: '',
+    dataConn: null,
+    mediaCall: null,
     localStream: null,
     micOn: true,
-    activePeerId: null,
-    activeName: '',
-    pending: {},
-    actions: null,
     startTime: null,
     clockInterval: null,
-    knockInterval: null,
-    knownPeers: {}
+    pendingConns: {} // for host: connId -> {conn, name}
   };
-
-  function escapeHtml(str) {
-    var d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  function setDebug(elId, text) {
-    var el = document.getElementById(elId);
-    if (el) el.textContent = text;
-  }
-
-  function getLocalAudio(dotEl, textEl) {
-    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-      if (dotEl) { dotEl.className = 'status-dot err'; textEl.textContent = 'No mic support — text-only.'; }
+ 
+  function getLocalAudio(dotEl, textEl){
+    if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+      dotEl.className = 'status-dot err'; textEl.textContent = "This browser can't access a microphone — continuing as text-only.";
       return Promise.resolve(null);
     }
-    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
       state.localStream = stream;
-      if (dotEl) { dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.'; }
+      dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.';
       return stream;
-    }).catch(function (err) {
-      console.warn('getUserMedia failed', err);
-      if (dotEl) { dotEl.className = 'status-dot err'; textEl.textContent = 'Mic denied — text-only is fine.'; }
+    }).catch(function(){
+      dotEl.className = 'status-dot err'; textEl.textContent = 'No microphone access — continuing as text-only.';
       return null;
     });
   }
-
-  function setupRoomActions(room) {
-    var knock = room.makeAction('knock');
-    var grant = room.makeAction('grant');
-    var deny = room.makeAction('deny');
-    var chat = room.makeAction('chat');
-    var react = room.makeAction('react');
-    state.actions = { knock: knock, grant: grant, deny: deny, chat: chat, react: react };
-
-    knock.onMessage = function (data, meta) {
-      var peerId = meta.peerId;
-      var name = (data && data.name) ? String(data.name).slice(0, 24) : 'Someone';
-      console.log('[host] knock from', peerId, name);
-      if (state.activePeerId) {
-        deny.send({ reason: 'busy' }, { target: peerId });
-        return;
-      }
-      state.pending[peerId] = { name: name };
-      renderHostKnockLists();
-    };
-
-    grant.onMessage = function (data, meta) {
-      if (state.role !== 'guest' || state.activePeerId) return;
-      var peerId = meta.peerId;
-      console.log('[guest] granted by', peerId);
-      state.activePeerId = peerId;
-      state.activeName = (data && data.name) ? String(data.name).slice(0, 24) : 'Host';
-      if (state.localStream) room.addStream(state.localStream, { target: peerId });
-      stopKnockRetry();
-      wireActiveMeetingActions();
-      enterRoom();
-    };
-
-    deny.onMessage = function (data) {
-      if (state.role !== 'guest' || state.activePeerId) return;
-      var reason = (data && data.reason === 'busy') ? 'Host is already in a meeting.' : "Host didn't let you in.";
-      document.getElementById('guestDeniedHeading').textContent = reason;
-      document.getElementById('guestWaitingCard').style.display = 'none';
-      document.getElementById('guestDeniedCard').style.display = 'block';
-      stopKnockRetry();
-      teardownRoom();
-    };
-
-    room.onPeerStream = function (stream, peerId) {
-      console.log('[stream] from', peerId);
-      attachRemoteAudio(peerId, stream);
-    };
-  }
-
-  function updatePeerStatus(role, peerId, joined) {
-    if (joined) state.knownPeers[peerId] = true;
-    else delete state.knownPeers[peerId];
-    var count = Object.keys(state.knownPeers).length;
-    var text = count === 0
-      ? (role === 'host' ? 'Looking for peers… (no one connected yet)' : 'Looking for host… (not found yet)')
-      : (role === 'host' ? 'Peer connected — waiting for them to knock…' : 'Found host — knocking…');
-    var dotClass = count > 0 ? 'status-dot ok' : 'status-dot pulse';
-    if (role === 'host') {
-      document.getElementById('hostPeerDot').className = dotClass;
-      document.getElementById('hostPeerText').textContent = text;
-      setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: ' + count);
-    } else {
-      document.getElementById('guestPeerDot').className = dotClass;
-      document.getElementById('guestPeerText').textContent = text;
-      setDebug('guestDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: ' + count);
-    }
-  }
-
-  function sendKnockTo(peerId) {
-    if (!state.actions || state.role !== 'guest' || state.activePeerId) return;
-    console.log('[guest] sending knock to', peerId);
-    state.actions.knock.send({ name: state.myName }, { target: peerId });
-  }
-
-  function startKnockRetry() {
-    stopKnockRetry();
-    state.knockInterval = setInterval(function () {
-      if (state.role !== 'guest' || state.activePeerId || !state.room) return;
-      var peers = state.room.getPeers ? state.room.getPeers() : {};
-      Object.keys(peers).forEach(function (pid) { sendKnockTo(pid); });
-      Object.keys(state.knownPeers).forEach(function (pid) { sendKnockTo(pid); });
-    }, 2500);
-  }
-
-  function stopKnockRetry() {
-    if (state.knockInterval) {
-      clearInterval(state.knockInterval);
-      state.knockInterval = null;
-    }
-  }
-
-  document.getElementById('startMeetingBtn').addEventListener('click', function () { resetHostView(); showView('hostView'); });
-  document.getElementById('joinMeetingBtn').addEventListener('click', function () { resetGuestView(); showView('guestView'); });
-  document.getElementById('hostBack1').addEventListener('click', function () { showView('landing'); });
-  document.getElementById('hostBack2').addEventListener('click', function () { teardownRoom(); showView('landing'); });
-  document.getElementById('guestBack1').addEventListener('click', function () { showView('landing'); });
-  document.getElementById('guestBack2').addEventListener('click', function () { teardownRoom(); showView('landing'); });
-  document.getElementById('guestBack3').addEventListener('click', function () { resetGuestView(); showView('guestView'); });
-  document.getElementById('backHomeBtn').addEventListener('click', function () { showView('landing'); });
-
-  function checkIncomingLink() {
+ 
+  function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+ 
+  /* ---------- Landing ---------- */
+  document.getElementById('startMeetingBtn').addEventListener('click', function(){
+    resetHostView();
+    showView('hostView');
+    beginHosting();
+  });
+  document.getElementById('joinMeetingBtn').addEventListener('click', function(){
+    resetGuestView();
+    showView('guestView');
+  });
+  document.getElementById('hostBackBtn').addEventListener('click', function(){ teardown(); showView('landing'); });
+  document.getElementById('guestBackBtn').addEventListener('click', function(){ teardown(); showView('landing'); });
+  document.getElementById('guestBackBtn2').addEventListener('click', function(){ teardown(); resetGuestView(); showView('guestView'); });
+  document.getElementById('backHomeBtn').addEventListener('click', function(){ showView('landing'); });
+ 
+  function checkIncomingLink(){
     var hash = window.location.hash || '';
     var m = hash.match(/^#join=(.+)$/);
-    if (m) {
+    if(m){
       resetGuestView();
-      document.getElementById('guestCodeInput').value = decodeURIComponent(m[1]).toLowerCase().trim();
+      document.getElementById('guestCodeInput').value = decodeURIComponent(m[1]);
       showView('guestView');
     }
   }
-
-  function resetHostView() {
-    document.getElementById('hostSetupCard').style.display = 'block';
-    document.getElementById('hostWaitingCard').style.display = 'none';
+ 
+  /* ---------- HOST ---------- */
+  function resetHostView(){
+    document.getElementById('hostCodeDisplay').style.display = 'none';
+    document.getElementById('waitingRoom').style.display = 'none';
+    document.getElementById('requestList').innerHTML = '';
     document.getElementById('hostMicStatusDot').className = 'status-dot pulse';
-    document.getElementById('hostMicStatusText').textContent = 'Requesting microphone…';
-    document.getElementById('hostPeerDot').className = 'status-dot pulse';
-    document.getElementById('hostPeerText').textContent = 'Looking for peers…';
-    document.getElementById('hostKnockList').innerHTML = '';
-    setDebug('hostDebug', 'Room: —');
+    document.getElementById('hostMicStatusText').textContent = 'Requesting microphone access…';
+    document.getElementById('hostSetupStatusDot').className = 'status-dot pulse';
+    document.getElementById('hostSetupStatusText').textContent = 'Setting up your meeting…';
   }
-
-  document.getElementById('hostCreateBtn').addEventListener('click', function () {
+ 
+  function beginHosting(attemptsLeft){
+    if(attemptsLeft === undefined) attemptsLeft = 5;
     state.role = 'host';
     state.myName = document.getElementById('hostNameInput').value.trim() || 'Host';
-    state.code = makeCode();
-    state.pending = {};
-    state.knownPeers = {};
-
-    document.getElementById('hostSetupCard').style.display = 'none';
-    document.getElementById('hostWaitingCard').style.display = 'block';
-    document.getElementById('hostCodeText').textContent = state.code;
-
-    var base = window.location.href.split('#')[0];
-    window._snailInviteLink = base + '#join=' + encodeURIComponent(state.code);
-
-    console.log('[host] joining room', state.code, 'selfId', selfId);
-    setDebug('hostDebug', 'Room: ' + state.code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: 0');
-
-    var room = joinRoom(ROOM_CONFIG, state.code);
-    state.room = room;
-    setupRoomActions(room);
-
-    room.onPeerJoin = function (peerId) {
-      console.log('[host] peer joined', peerId);
-      updatePeerStatus('host', peerId, true);
-    };
-    room.onPeerLeave = function (peerId) {
-      console.log('[host] peer left', peerId);
-      updatePeerStatus('host', peerId, false);
-      if (state.pending[peerId]) {
-        delete state.pending[peerId];
-        renderHostKnockLists();
+    var code = makeCode();
+    var micDot = document.getElementById('hostMicStatusDot');
+    var micText = document.getElementById('hostMicStatusText');
+    var setupDot = document.getElementById('hostSetupStatusDot');
+    var setupText = document.getElementById('hostSetupStatusText');
+ 
+    getLocalAudio(micDot, micText); // fire and forget; state.localStream fills in when ready
+ 
+    var peer = new Peer(code);
+    state.myPeer = peer;
+ 
+    peer.on('open', function(id){
+      state.myId = id;
+      document.getElementById('hostCodeValue').textContent = id;
+      document.getElementById('hostCodeDisplay').style.display = 'block';
+      document.getElementById('waitingRoom').style.display = 'block';
+      setupDot.className = 'status-dot ok';
+      setupText.textContent = 'Meeting is live. Share the code above.';
+      window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(id);
+    });
+ 
+    peer.on('error', function(err){
+      if(err && err.type === 'unavailable-id' && attemptsLeft > 0){
+        beginHosting(attemptsLeft - 1);
+        return;
       }
-      if (state.activePeerId === peerId) handlePeerGoneMidMeeting();
-    };
-
-    getLocalAudio(document.getElementById('hostMicStatusDot'), document.getElementById('hostMicStatusText'));
-  });
-
-  function renderHostKnockLists() {
-    var ids = Object.keys(state.pending);
-    var listHtml = ids.length
-      ? '<div class="knock-list">' + ids.map(renderKnockItem).join('') + '</div>'
-      : '<div class="knock-empty">No one has knocked yet.</div>';
-    document.getElementById('hostKnockList').innerHTML = listHtml;
-    wireKnockButtons(document.getElementById('hostKnockList'));
-
-    var roomList = document.getElementById('roomKnockList');
-    var bell = document.getElementById('roomKnockBtn');
-    if (roomList) {
-      roomList.innerHTML = ids.length ? ids.map(renderKnockItem).join('') : '<div class="knock-empty">Nobody waiting.</div>';
-      wireKnockButtons(roomList);
-    }
-    if (bell) {
-      if (ids.length) { bell.classList.add('has-badge'); bell.setAttribute('data-badge', String(ids.length)); }
-      else { bell.classList.remove('has-badge'); }
-    }
-  }
-
-  function renderKnockItem(peerId) {
-    var name = escapeHtml(state.pending[peerId].name);
-    return '<div class="knock-item" data-peer="' + peerId + '">' +
-      '<span class="emoji">🐚</span><span class="kname">' + name + '</span>' +
-      '<div class="kactions"><button class="btn btn-allow btn-sm" data-action="allow" data-peer="' + peerId + '" type="button">Allow</button></div></div>';
-  }
-
-  function wireKnockButtons(container) {
-    container.querySelectorAll('button[data-action="allow"]').forEach(function (btn) {
-      btn.addEventListener('click', function () { allowPeer(btn.getAttribute('data-peer')); });
+      setupDot.className = 'status-dot err';
+      setupText.textContent = 'Could not set up the meeting (' + (err && err.type ? err.type : 'connection error') + '). Try again.';
+    });
+ 
+    peer.on('connection', function(conn){
+      var name = (conn.metadata && conn.metadata.name) ? conn.metadata.name : 'Someone';
+      state.pendingConns[conn.peer] = { conn: conn, name: name };
+      renderRequests();
+      conn.on('close', function(){
+        delete state.pendingConns[conn.peer];
+        renderRequests();
+      });
     });
   }
-
-  function allowPeer(peerId) {
-    if (!state.pending[peerId] || !state.actions) return;
-    var name = state.pending[peerId].name;
-    delete state.pending[peerId];
-    state.activePeerId = peerId;
-    state.activeName = name;
-    console.log('[host] allowing', peerId, name);
-    state.actions.grant.send({ name: state.myName }, { target: peerId });
-    if (state.localStream) state.room.addStream(state.localStream, { target: peerId });
-    wireActiveMeetingActions();
-    enterRoom();
-    renderHostKnockLists();
+ 
+  function renderRequests(){
+    var list = document.getElementById('requestList');
+    var emptyNote = document.getElementById('emptyRequestNote');
+    var ids = Object.keys(state.pendingConns);
+    list.innerHTML = '';
+    emptyNote.style.display = ids.length ? 'none' : 'block';
+    ids.forEach(function(id){
+      var entry = state.pendingConns[id];
+      var row = document.createElement('div');
+      row.className = 'request-item';
+      row.innerHTML =
+        '<span class="rq-name">🐚 ' + escapeHtml(entry.name) + '</span>' +
+        '<span class="request-actions"><button class="admit-btn" type="button">Allow</button><button class="decline-btn" type="button">Decline</button></span>';
+      row.querySelector('.admit-btn').addEventListener('click', function(){ admitGuest(id); });
+      row.querySelector('.decline-btn').addEventListener('click', function(){ declineGuest(id); });
+      list.appendChild(row);
+    });
   }
-
-  document.getElementById('copyCodeBtn').addEventListener('click', function () { copyToClipboard(state.code, this); });
-  document.getElementById('copyLinkBtn').addEventListener('click', function () { copyToClipboard(window._snailInviteLink || '', this); });
-
-  function resetGuestView() {
-    document.getElementById('guestSetupCard').style.display = 'block';
-    document.getElementById('guestWaitingCard').style.display = 'none';
-    document.getElementById('guestDeniedCard').style.display = 'none';
+ 
+  function admitGuest(peerId){
+    var entry = state.pendingConns[peerId];
+    if(!entry) return;
+    Object.keys(state.pendingConns).forEach(function(otherId){
+      if(otherId !== peerId){ declineGuest(otherId); }
+    });
+    state.dataConn = entry.conn;
+    state.peerName = entry.name;
+    delete state.pendingConns[peerId];
+    wireDataConnection(state.dataConn);
+    state.dataConn.send({ kind: 'ADMIT' });
+ 
+    if(state.localStream){
+      var call = state.myPeer.call(peerId, state.localStream, { metadata: { name: state.myName } });
+      wireMediaCall(call);
+    } else {
+      state.myPeer.on('call', function(call){ call.close(); }); // nothing to send; guest may still call us
+    }
+    onConnected();
+  }
+ 
+  function declineGuest(peerId){
+    var entry = state.pendingConns[peerId];
+    if(!entry) return;
+    try{ entry.conn.send({ kind: 'DECLINE' }); }catch(e){}
+    setTimeout(function(){ try{ entry.conn.close(); }catch(e){} }, 150);
+    delete state.pendingConns[peerId];
+    renderRequests();
+  }
+ 
+  document.getElementById('copyCodeBtn').addEventListener('click', function(){
+    copyToClipboard(state.myId || '', this);
+  });
+  document.getElementById('copyLinkBtn').addEventListener('click', function(){
+    copyToClipboard(window._snailInviteLink || '', this);
+  });
+ 
+  /* ---------- GUEST ---------- */
+  function resetGuestView(){
+    document.getElementById('guestStep1').style.display = 'block';
+    document.getElementById('guestStep2').style.display = 'none';
     document.getElementById('guestMicStatusDot').className = 'status-dot pulse';
-    document.getElementById('guestMicStatusText').textContent = 'Requesting microphone…';
-    document.getElementById('guestPeerDot').className = 'status-dot pulse';
-    document.getElementById('guestPeerText').textContent = 'Looking for host…';
-    setDebug('guestDebug', 'Room: —');
+    document.getElementById('guestMicStatusText').textContent = 'Requesting microphone access…';
+    document.getElementById('guestKnockStatusDot').className = 'status-dot pulse';
+    document.getElementById('guestKnockStatusText').textContent = 'Connecting to the meeting…';
   }
-
-  document.getElementById('guestKnockBtn').addEventListener('click', function () {
-    var code = document.getElementById('guestCodeInput').value.trim().toLowerCase().replace(/\s+/g, '');
-    if (!code) { alert('Enter the meeting code first.'); return; }
+ 
+  document.getElementById('guestKnockBtn').addEventListener('click', function(){
+    var code = document.getElementById('guestCodeInput').value.trim().toLowerCase();
+    if(!code){ alert('Enter the meeting code first.'); return; }
     state.role = 'guest';
     state.myName = document.getElementById('guestNameInput').value.trim() || 'Guest';
-    state.code = code;
-    state.knownPeers = {};
-
-    document.getElementById('guestSetupCard').style.display = 'none';
-    document.getElementById('guestWaitingCard').style.display = 'block';
-
-    console.log('[guest] joining room', code, 'selfId', selfId);
-    setDebug('guestDebug', 'Room: ' + code + ' · me: ' + String(selfId || '?').slice(0, 8) + ' · peers: 0');
-
-    var room = joinRoom(ROOM_CONFIG, code);
-    state.room = room;
-    setupRoomActions(room);
-
-    room.onPeerJoin = function (peerId) {
-      console.log('[guest] peer joined (likely host)', peerId);
-      updatePeerStatus('guest', peerId, true);
-      sendKnockTo(peerId);
-    };
-    room.onPeerLeave = function (peerId) {
-      console.log('[guest] peer left', peerId);
-      updatePeerStatus('guest', peerId, false);
-      if (state.activePeerId === peerId) handlePeerGoneMidMeeting();
-    };
-
-    startKnockRetry();
-    getLocalAudio(document.getElementById('guestMicStatusDot'), document.getElementById('guestMicStatusText'));
+    document.getElementById('guestStep1').style.display = 'none';
+    document.getElementById('guestStep2').style.display = 'block';
+ 
+    var micDot = document.getElementById('guestMicStatusDot');
+    var micText = document.getElementById('guestMicStatusText');
+    var knockDot = document.getElementById('guestKnockStatusDot');
+    var knockText = document.getElementById('guestKnockStatusText');
+ 
+    getLocalAudio(micDot, micText);
+ 
+    var peer = new Peer();
+    state.myPeer = peer;
+ 
+    peer.on('open', function(){
+      var conn = peer.connect(code, { metadata: { name: state.myName }, reliable: true });
+      state.dataConn = conn;
+      wireDataConnection(conn);
+      conn.on('open', function(){
+        knockDot.className = 'status-dot ok';
+        knockText.textContent = "You're through the door — waiting for the host to tap Allow…";
+      });
+    });
+ 
+    peer.on('call', function(call){
+      state.mediaCall = call;
+      call.answer(state.localStream || undefined);
+      wireMediaCall(call);
+    });
+ 
+    peer.on('error', function(err){
+      knockDot.className = 'status-dot err';
+      if(err && err.type === 'peer-unavailable'){
+        knockText.textContent = "Couldn't find a meeting with that code. Double-check it and try again.";
+      } else {
+        knockText.textContent = 'Connection trouble (' + (err && err.type ? err.type : 'unknown') + '). Try again.';
+      }
+    });
   });
-
-  function copyToClipboard(text, btn) {
-    if (!text) return;
-    var done = function () {
-      var original = btn.textContent;
-      btn.textContent = 'Copied ✓';
-      setTimeout(function () { btn.textContent = original; }, 1600);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text); done(); });
-    } else { fallbackCopy(text); done(); }
+ 
+  /* ---------- Shared data connection wiring ---------- */
+  var CHAT = 'SNAIL_CHAT', REACT = 'SNAIL_REACT', ADMIT = 'ADMIT', DECLINE = 'DECLINE';
+ 
+  function wireDataConnection(conn){
+    conn.on('data', function(data){
+      if(!data || !data.kind) return;
+      if(data.kind === ADMIT){
+        if(state.role === 'guest'){ onConnected(); }
+      } else if(data.kind === DECLINE){
+        document.getElementById('guestKnockStatusDot').className = 'status-dot err';
+        document.getElementById('guestKnockStatusText').textContent = "The host wasn't able to let you in this time.";
+      } else if(data.kind === CHAT){
+        addChatLine(state.peerName || 'Peer', data.text, false);
+      } else if(data.kind === REACT){
+        spawnFloatEmoji(data.emoji, false);
+      }
+    });
+    conn.on('close', function(){
+      if(views.room.classList.contains('active')){
+        document.getElementById('roomStatus').textContent = 'peer disconnected';
+        document.getElementById('chatInput').disabled = true;
+        document.getElementById('chatSendBtn').disabled = true;
+      }
+    });
+    if(state.role === 'guest'){
+      conn.metadata = conn.metadata || {};
+      state.peerName = state.peerName; // host name arrives via metadata below once host admits (see ADMIT flow uses conn already open)
+    }
   }
-  function fallbackCopy(text) {
-    var ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(ta);
+ 
+  function wireMediaCall(call){
+    call.on('stream', function(remoteStream){
+      var audioEl = document.getElementById('remoteAudio');
+      audioEl.srcObject = remoteStream;
+    });
   }
-
-  function wireActiveMeetingActions() {
-    if (!state.actions) return;
-    state.actions.chat.onMessage = function (data, meta) {
-      if (meta.peerId !== state.activePeerId) return;
-      addChatLine(state.activeName, data.text, false);
-    };
-    state.actions.react.onMessage = function (data, meta) {
-      if (meta.peerId !== state.activePeerId) return;
-      spawnFloatEmoji(data.emoji, false);
-    };
+ 
+  function sendData(obj){
+    if(state.dataConn && state.dataConn.open){ state.dataConn.send(obj); }
   }
-
-  function attachRemoteAudio(peerId, stream) {
-    var container = document.getElementById('remoteAudioContainer');
-    var existing = document.getElementById('audio-' + peerId);
-    if (existing) { existing.srcObject = stream; return; }
-    var audioEl = document.createElement('audio');
-    audioEl.id = 'audio-' + peerId;
-    audioEl.autoplay = true;
-    audioEl.playsInline = true;
-    audioEl.srcObject = stream;
-    container.appendChild(audioEl);
-  }
-
-  function enterRoom() {
-    document.getElementById('roomTitleText').textContent = 'Meeting with ' + state.activeName;
+ 
+  /* ---------- Room ---------- */
+  function onConnected(){
+    // Guest learns host's name from connection metadata isn't available on guest side by default,
+    // so we exchange names as the first chat-channel message.
+    sendData({ kind: 'SNAIL_HELLO', name: state.myName });
+ 
+    document.getElementById('roomTitleText').textContent = 'Meeting room';
     document.getElementById('roomStatus').textContent = 'connected';
     document.getElementById('chatInput').disabled = false;
     document.getElementById('chatSendBtn').disabled = false;
     document.getElementById('chatMessages').innerHTML = '';
     renderRoster();
-    renderHostKnockLists();
-    addSystemChatLine('Connected — browser to browser.');
+    addSystemChatLine("You're connected — straight from browser to browser.");
     state.startTime = Date.now();
     clearInterval(state.clockInterval);
     state.clockInterval = setInterval(updateClock, 1000);
     updateClock();
     showView('room');
+ 
+    if(state.role === 'guest' && state.localStream && !state.mediaCall){
+      // guest already answers incoming calls in peer.on('call'); nothing else needed here.
+    }
   }
-
-  function renderRoster() {
+ 
+  // Patch data handler to also catch SNAIL_HELLO (added after initial wireDataConnection was authored)
+  var originalWire = wireDataConnection;
+  wireDataConnection = function(conn){
+    originalWire(conn);
+    conn.on('data', function(data){
+      if(data && data.kind === 'SNAIL_HELLO'){
+        state.peerName = data.name || (state.role === 'host' ? 'Guest' : 'Host');
+        renderRoster();
+        addSystemChatLine(state.peerName + ' has arrived, unhurried as ever.');
+      }
+    });
+  };
+ 
+  function renderRoster(){
     var list = document.getElementById('rosterList');
     list.innerHTML = '';
     var me = document.createElement('div');
     me.className = 'roster-item';
-    me.innerHTML = '<span class="emoji">🐌</span><div><div class="rname">' + escapeHtml(state.myName) + ' (you)</div><div class="rstatus">here</div></div>';
+    me.innerHTML = '<span class="emoji">🐌</span><div><div class="rname">' + escapeHtml(state.myName || 'You') + ' (you)</div><div class="rstatus">here</div></div>';
     list.appendChild(me);
-    if (state.activeName) {
-      var peer = document.createElement('div');
-      peer.className = 'roster-item';
-      peer.innerHTML = '<span class="emoji">🐚</span><div><div class="rname">' + escapeHtml(state.activeName) + '</div><div class="rstatus">connected</div></div>';
-      list.appendChild(peer);
+    if(state.peerName){
+      var peerEl = document.createElement('div');
+      peerEl.className = 'roster-item';
+      peerEl.innerHTML = '<span class="emoji">🐚</span><div><div class="rname">' + escapeHtml(state.peerName) + '</div><div class="rstatus">connected</div></div>';
+      list.appendChild(peerEl);
     }
   }
-
-  function updateClock() {
-    if (!state.startTime) return;
-    var secs = Math.floor((Date.now() - state.startTime) / 1000);
-    var m = String(Math.floor(secs / 60)).padStart(2, '0');
-    var s = String(secs % 60).padStart(2, '0');
-    document.getElementById('roomClock').textContent = m + ':' + s;
+ 
+  function updateClock(){
+    if(!state.startTime) return;
+    var secs = Math.floor((Date.now() - state.startTime)/1000);
+    var m = String(Math.floor(secs/60)).padStart(2,'0');
+    var s = String(secs%60).padStart(2,'0');
+    document.getElementById('roomClock').textContent = m+':'+s;
   }
-
-  function addChatLine(who, text, isSelf) {
+ 
+  function addChatLine(who, text, isSelf){
     var wrap = document.getElementById('chatMessages');
     var msg = document.createElement('div');
     msg.className = 'msg' + (isSelf ? ' self' : '');
@@ -736,8 +688,7 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqt
     wrap.appendChild(msg);
     wrap.scrollTop = wrap.scrollHeight;
   }
-
-  function addSystemChatLine(text) {
+  function addSystemChatLine(text){
     var wrap = document.getElementById('chatMessages');
     var msg = document.createElement('div');
     msg.className = 'msg system';
@@ -746,100 +697,101 @@ import { joinRoom, selfId } from 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqt
     wrap.appendChild(msg);
     wrap.scrollTop = wrap.scrollHeight;
   }
-
+ 
   document.getElementById('chatSendBtn').addEventListener('click', sendChat);
-  document.getElementById('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
-
-  function sendChat() {
+  document.getElementById('chatInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') sendChat(); });
+  function sendChat(){
     var input = document.getElementById('chatInput');
     var val = input.value.trim();
-    if (!val || !state.activePeerId || !state.actions) return;
-    addChatLine(state.myName + ' (you)', val, true);
-    state.actions.chat.send({ text: val }, { target: state.activePeerId });
+    if(!val) return;
+    addChatLine((state.myName || 'You') + ' (you)', val, true);
+    sendData({ kind: CHAT, text: val });
     input.value = '';
   }
-
+ 
   var reactBtn = document.getElementById('reactBtn');
   var reactionsPop = document.getElementById('reactionsPop');
-  reactBtn.addEventListener('click', function () {
-    reactionsPop.style.display = reactionsPop.style.display === 'flex' ? 'none' : 'flex';
-  });
-  reactionsPop.querySelectorAll('button').forEach(function (b) {
-    b.addEventListener('click', function () {
+  reactBtn.addEventListener('click', function(){ reactionsPop.style.display = reactionsPop.style.display === 'flex' ? 'none' : 'flex'; });
+  reactionsPop.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click', function(){
       var emoji = b.getAttribute('data-emoji');
       spawnFloatEmoji(emoji, true);
-      if (state.activePeerId && state.actions) state.actions.react.send({ emoji: emoji }, { target: state.activePeerId });
+      sendData({ kind: REACT, emoji: emoji });
       reactionsPop.style.display = 'none';
     });
   });
-
-  var roomKnockBtn = document.getElementById('roomKnockBtn');
-  var roomKnockPop = document.getElementById('roomKnockPop');
-  roomKnockBtn.addEventListener('click', function () {
-    roomKnockPop.style.display = roomKnockPop.style.display === 'block' ? 'none' : 'block';
+  document.addEventListener('click', function(e){
+    if(!reactionsPop.contains(e.target) && e.target !== reactBtn){ reactionsPop.style.display = 'none'; }
   });
-
-  document.addEventListener('click', function (e) {
-    if (!reactionsPop.contains(e.target) && e.target !== reactBtn) reactionsPop.style.display = 'none';
-    if (!roomKnockPop.contains(e.target) && e.target !== roomKnockBtn) roomKnockPop.style.display = 'none';
-  });
-
-  function spawnFloatEmoji(emoji, fromSelf) {
+  function spawnFloatEmoji(emoji, fromSelf){
     var zone = document.getElementById('chatMessages');
     var el = document.createElement('div');
     el.className = 'float-emoji';
     el.textContent = emoji;
-    el.style.left = fromSelf ? '70%' : '20%';
+    el.style.left = (fromSelf ? '70%' : '20%');
     el.style.bottom = '10px';
     zone.appendChild(el);
-    setTimeout(function () { el.remove(); }, 2200);
+    zone.scrollTop = zone.scrollHeight;
+    setTimeout(function(){ el.remove(); }, 2200);
   }
-
+ 
   var micToggleBtn = document.getElementById('micToggleBtn');
-  micToggleBtn.addEventListener('click', function () {
-    if (!state.localStream) return;
+  micToggleBtn.addEventListener('click', function(){
+    if(!state.localStream){ micToggleBtn.title = 'No microphone connected'; return; }
     state.micOn = !state.micOn;
-    state.localStream.getAudioTracks().forEach(function (t) { t.enabled = state.micOn; });
+    state.localStream.getAudioTracks().forEach(function(track){ track.enabled = state.micOn; });
     micToggleBtn.textContent = state.micOn ? '🎙️' : '🔇';
     micToggleBtn.classList.toggle('is-off', !state.micOn);
+    micToggleBtn.title = state.micOn ? 'Mute microphone' : 'Unmute microphone';
   });
-
-  function handlePeerGoneMidMeeting() {
-    if (!views.room.classList.contains('active')) return;
-    addSystemChatLine(state.activeName + ' left the meeting.');
-    document.getElementById('roomStatus').textContent = 'peer disconnected';
-    document.getElementById('chatInput').disabled = true;
-    document.getElementById('chatSendBtn').disabled = true;
-    state.activePeerId = null;
+ 
+  /* ---------- Clipboard ---------- */
+  function copyToClipboard(text, btn){
+    if(!text) return;
+    var done = function(){
+      var original = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(function(){ btn.textContent = original; }, 1600);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
   }
-
-  document.getElementById('leaveBtn').addEventListener('click', function () {
-    var secs = state.startTime ? Math.floor((Date.now() - state.startTime) / 1000) : 0;
-    var m = Math.floor(secs / 60), s = secs % 60;
-    teardownRoom();
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+ 
+  /* ---------- Leave / teardown ---------- */
+  document.getElementById('leaveBtn').addEventListener('click', function(){
+    var secs = state.startTime ? Math.floor((Date.now() - state.startTime)/1000) : 0;
+    var m = Math.floor(secs/60), s = secs%60;
+    teardown();
     document.getElementById('endedSummary').textContent =
-      'That was ' + (m > 0 ? m + 'm ' : '') + s + 's of server-free conversation.';
+      "That was " + (m>0 ? m+"m " : "") + s + "s of unhurried conversation. Nicely paced.";
     showView('ended');
   });
-
-  function teardownRoom() {
+ 
+  function teardown(){
     clearInterval(state.clockInterval);
-    stopKnockRetry();
-    if (state.room) { try { state.room.leave(); } catch (e) {} }
-    if (state.localStream) { try { state.localStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} }
-    document.getElementById('remoteAudioContainer').innerHTML = '';
-    state.room = null;
-    state.actions = null;
-    state.activePeerId = null;
-    state.activeName = '';
-    state.localStream = null;
-    state.micOn = true;
-    state.pending = {};
-    state.knownPeers = {};
+    if(state.dataConn){ try{ state.dataConn.close(); }catch(e){} }
+    if(state.mediaCall){ try{ state.mediaCall.close(); }catch(e){} }
+    if(state.myPeer){ try{ state.myPeer.destroy(); }catch(e){} }
+    if(state.localStream){ try{ state.localStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} }
+    var remoteAudioEl = document.getElementById('remoteAudio');
+    if(remoteAudioEl){ remoteAudioEl.srcObject = null; }
+    state = {
+      role: null, myPeer: null, myId: null, myName: '', peerName: '',
+      dataConn: null, mediaCall: null, localStream: null, micOn: true,
+      startTime: null, clockInterval: null, pendingConns: {}
+    };
     micToggleBtn.textContent = '🎙️';
     micToggleBtn.classList.remove('is-off');
   }
-
+ 
   checkIncomingLink();
 })();
 </script>
