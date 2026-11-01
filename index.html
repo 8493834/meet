@@ -285,7 +285,7 @@
 <section id="room" class="view">
   <div class="room-header">
     <div class="room-title"><span aria-hidden="true">🐌</span><span id="roomTitleText">Meeting room</span></div>
-    <div class="room-meta"><span id="roomStatus">connecting…</span><span id="roomClock">00:00</span></div>
+    <div class="room-meta"><button class="btn btn-primary btn-sm" id="audioBlockedBtn" type="button" style="display:none;">🔊 Tap to hear everyone</button><span id="roomStatus">connecting…</span><span id="roomClock">00:00</span></div>
   </div>
   <div class="room-body">
     <div class="roster">
@@ -394,6 +394,7 @@
       silentStream: null,
       audioCtx: null,
       micPromise: null,
+      micAsking: false,
       micOn: true,
       inRoom: false,
       declined: false,
@@ -408,19 +409,60 @@
 
   function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
+  // Asks for the microphone. Calls never wait on this: they start immediately with a silent
+  // stream, and the real mic track is swapped in (see sendMicToCalls) whenever it arrives.
+  // That way hearing others never depends on how quickly someone answers the browser's prompt.
   function getLocalAudio(dotEl, textEl){
+    var say = function(cls, msg){
+      if(dotEl){ dotEl.className = 'status-dot ' + cls; }
+      if(textEl){ textEl.textContent = msg; }
+    };
+    if(state.localStream){ say('ok', 'Microphone ready.'); return Promise.resolve(state.localStream); }
     if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
-      dotEl.className = 'status-dot err'; textEl.textContent = "This browser can't access a microphone — you'll listen and chat only.";
+      say('err', "This browser can't access a microphone — you'll listen and chat only.");
       return Promise.resolve(null);
     }
+    var session = state;      // if the person leaves while the prompt is open, don't touch the next session
+    session.micAsking = true;
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
-      state.localStream = stream;
-      dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.';
+      if(session !== state){ stream.getTracks().forEach(function(t){ t.stop(); }); return null; }
+      session.micAsking = false;
+      stream.getAudioTracks().forEach(function(t){ t.enabled = session.micOn; });
+      session.localStream = stream;
+      say('ok', 'Microphone ready.');
+      sendMicToCalls(stream);
+      updateMicButton();
       return stream;
     }).catch(function(){
-      dotEl.className = 'status-dot err'; textEl.textContent = "No microphone access — you'll listen and chat only.";
+      session.micAsking = false;
+      say('err', "No microphone access — you'll listen and chat only.");
       return null;
     });
+  }
+
+  // Swap the real mic into calls that started with a silent stream.
+  function sendMicToCalls(stream){
+    var track = stream.getAudioTracks()[0];
+    if(!track) return;
+    Object.keys(state.calls).forEach(function(id){
+      var pc = state.calls[id].peerConnection;
+      if(!pc) return;
+      pc.getSenders().forEach(function(sender){
+        if(sender.track && sender.track.kind === 'audio'){ sender.replaceTrack(track).catch(function(){}); }
+      });
+    });
+  }
+
+  function updateMicButton(){
+    var b = micToggleBtn;
+    if(!b) return;
+    if(!state.localStream){
+      b.textContent = '🎙️'; b.classList.add('is-off'); b.title = 'Your microphone is off — click to turn it on';
+    } else {
+      b.textContent = state.micOn ? '🎙️' : '🔇';
+      b.classList.toggle('is-off', !state.micOn);
+      b.title = state.micOn ? 'Mute microphone' : 'Unmute microphone';
+    }
   }
 
   // People without a mic still need to place calls (PeerJS needs a stream), so
@@ -476,11 +518,22 @@
       container.appendChild(el);
     }
     el.srcObject = stream;
-    var p = el.play(); if(p && p.catch){ p.catch(function(){}); }
+    playAudio(el);
+  }
+  // Browsers can refuse to start audio until the page has been interacted with. If that
+  // happens, show a button instead of failing silently.
+  function playAudio(el){
+    var p = el.play();
+    if(p && p.then){ p.then(refreshAudioBlocked, function(){ document.getElementById('audioBlockedBtn').style.display = 'inline-flex'; }); }
+  }
+  function refreshAudioBlocked(){
+    var anyPaused = [].some.call(document.querySelectorAll('#remoteAudioContainer audio'), function(a){ return a.paused; });
+    document.getElementById('audioBlockedBtn').style.display = anyPaused ? 'inline-flex' : 'none';
   }
   function removeAudio(id){
     var el = document.getElementById('audio-' + id);
     if(el){ el.srcObject = null; el.remove(); }
+    refreshAudioBlocked();
   }
   function wireCall(call){
     var id = call.peer;
@@ -655,6 +708,10 @@
     if(countMembers() >= MAX_MEMBERS){ declineGuest(peerId, 'full'); return; }
     delete state.pending[peerId];
 
+    // The host's name field only appears after the meeting starts, so pick up what they typed now.
+    var typedName = document.getElementById('hostNameInput').value.trim();
+    if(typedName){ state.myName = typedName; if(state.members[state.myId]){ state.members[state.myId].name = typedName; } }
+
     var roster = Object.keys(state.members).map(function(mid){ return { id: mid, name: state.members[mid].name }; });
     try{ entry.conn.send({ kind: ADMIT, hostName: state.myName, roster: roster }); }catch(e){}
     broadcast({ kind: JOINED, id: peerId, name: entry.name }); // tell everyone already in
@@ -738,10 +795,9 @@
           state.members[state.myId] = { name: state.myName };
           if(!state.members[hostId]){ state.members[hostId] = { name: data.hostName || 'Host' }; }
           enterRoom();
-          // Call everyone who was already here; they answer, so each pair connects once.
-          (state.micPromise || Promise.resolve()).then(function(){
-            (data.roster || []).forEach(function(r){ callPeer(r.id); });
-          });
+          // Call everyone who was already here straight away (silent stream if the mic isn't
+          // ready yet); they answer, so each pair connects once.
+          (data.roster || []).forEach(function(r){ callPeer(r.id); });
           break;
         case DECLINE:
           state.declined = true;
@@ -796,6 +852,10 @@
     renderRoster();
     renderRequests();
     addSystemChatLine("You're connected — straight from browser to browser.");
+    updateMicButton();
+    if(!state.localStream){
+      addSystemChatLine("Your microphone isn't on yet, so others can't hear you. Allow it in the browser prompt, or click the mic button. You can hear everyone meanwhile.");
+    }
     state.startTime = Date.now();
     clearInterval(state.clockInterval);
     state.clockInterval = setInterval(updateClock, 1000);
@@ -905,12 +965,24 @@
 
   var micToggleBtn = document.getElementById('micToggleBtn');
   micToggleBtn.addEventListener('click', function(){
-    if(!state.localStream){ micToggleBtn.title = 'No microphone connected'; return; }
+    if(!state.localStream){
+      if(state.micAsking){ addSystemChatLine("Still waiting on your browser's microphone prompt — look near the address bar."); return; }
+      addSystemChatLine('Asking your browser for the microphone…');
+      getLocalAudio(null, null).then(function(stream){
+        addSystemChatLine(stream
+          ? 'Microphone is on — everyone can hear you now.'
+          : "Couldn't get the microphone. Click the lock icon in the address bar, allow the microphone for this site, then click the mic again.");
+        updateMicButton();
+      });
+      return;
+    }
     state.micOn = !state.micOn;
     state.localStream.getAudioTracks().forEach(function(track){ track.enabled = state.micOn; });
-    micToggleBtn.textContent = state.micOn ? '🎙️' : '🔇';
-    micToggleBtn.classList.toggle('is-off', !state.micOn);
-    micToggleBtn.title = state.micOn ? 'Mute microphone' : 'Unmute microphone';
+    updateMicButton();
+  });
+
+  document.getElementById('audioBlockedBtn').addEventListener('click', function(){
+    document.querySelectorAll('#remoteAudioContainer audio').forEach(playAudio);
   });
 
   /* ---------- Clipboard ---------- */
@@ -935,9 +1007,12 @@
 
   /* ---------- Leave / teardown ---------- */
   document.getElementById('leaveBtn').addEventListener('click', function(){
+    var wasHost = state.role === 'host';
+    var othersHere = countMembers() - 1;
+    var question = (wasHost && othersHere > 0) ? "Leave the meeting? You're the host, so this ends it for everyone." : 'Leave the meeting?';
+    if(!window.confirm(question)) return;
     var secs = state.startTime ? Math.floor((Date.now() - state.startTime)/1000) : 0;
     var m = Math.floor(secs/60), s = secs%60;
-    var wasHost = state.role === 'host';
     teardown();
     document.getElementById('endedSummary').textContent =
       "That was " + (m>0 ? m+"m " : "") + s + "s of unhurried conversation." + (wasHost ? " Since you hosted, the meeting ended for everyone." : "") + " Nicely paced.";
@@ -958,8 +1033,8 @@
     document.getElementById('roomRequestList').innerHTML = '';
     document.getElementById('roomKnockBtn').classList.remove('has-badge');
     state = freshState();
-    micToggleBtn.textContent = '🎙️';
-    micToggleBtn.classList.remove('is-off');
+    updateMicButton();
+    refreshAudioBlocked();
   }
 
   checkIncomingLink();
