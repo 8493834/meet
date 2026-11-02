@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="config.js"></script>
 <style>
   :root{
     --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e; --moss-700:#34482a;
@@ -124,7 +125,6 @@
   .feature-card p{margin:6px 0 0; color:var(--text-muted); font-size:.88rem; line-height:1.5;}
   .footer-strip{text-align:center; padding:20px 20px 50px; color:var(--text-muted); font-size:.82rem;}
 
-  /* ---- ROOM ---- */
   #room{background:var(--moss-950); color:var(--cream-050); display:flex; flex-direction:column;}
   .room-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(245,239,221,0.14);}
   .room-title{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-size:1.05rem;}
@@ -186,7 +186,6 @@
 </head>
 <body>
 
-<!-- ============ LANDING ============ -->
 <section id="landing" class="view active">
   <div class="topbar">
     <div class="brandmark">
@@ -208,6 +207,10 @@
       <button class="btn btn-primary" id="startMeetingBtn" type="button"><span aria-hidden="true">＋</span> Start a meeting</button>
       <button class="btn btn-ghost" id="joinMeetingBtn" type="button">Join with a code</button>
     </div>
+    <div class="cta-row" id="landingRejoinRow" style="display:none; margin-top:14px;">
+      <button class="btn btn-ghost" id="landingRejoinBtn" type="button"></button>
+    </div>
+    <div class="note-box" id="libWarning" style="display:none; margin:22px auto 0; max-width:560px; text-align:left;"></div>
   </div>
 
   <div class="features">
@@ -218,7 +221,6 @@
   <div class="footer-strip">Snail Meet Lite · share a code, tap Allow, talk 🐌</div>
 </section>
 
-<!-- ============ HOST ============ -->
 <section id="hostView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Hosting</span></div>
   <div class="card">
@@ -233,6 +235,7 @@
 
     <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone access…</span></div>
     <div class="status-line"><span class="status-dot pulse" id="hostSetupStatusDot"></span><span id="hostSetupStatusText">Setting up your meeting…</span></div>
+    <button class="btn btn-ghost btn-sm" id="hostRetryBtn" type="button" style="display:none; margin-top:12px;">Try again</button>
 
     <div class="code-display" id="hostCodeDisplay" style="display:none;">
       <div class="code-value" id="hostCodeValue"></div>
@@ -252,7 +255,6 @@
   </div>
 </section>
 
-<!-- ============ GUEST ============ -->
 <section id="guestView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Joining</span></div>
   <div class="card" id="guestStep1">
@@ -277,15 +279,15 @@
     <p class="sub">Sitting tight until the host lets you in. No need to do anything else.</p>
     <div class="status-line"><span class="status-dot pulse" id="guestMicStatusDot"></span><span id="guestMicStatusText">Requesting microphone access…</span></div>
     <div class="status-line"><span class="status-dot pulse" id="guestKnockStatusDot"></span><span id="guestKnockStatusText">Connecting to the meeting…</span></div>
+    <button class="btn btn-ghost btn-sm" id="guestRetryBtn" type="button" style="display:none; margin-top:12px;">Try again</button>
     <button class="back-link" id="guestBackBtn2" type="button">← Cancel</button>
   </div>
 </section>
-
-<!-- ============ ROOM ============ -->
+  
 <section id="room" class="view">
   <div class="room-header">
     <div class="room-title"><span aria-hidden="true">🐌</span><span id="roomTitleText">Meeting room</span></div>
-    <div class="room-meta"><span id="roomStatus">connecting…</span><span id="roomClock">00:00</span></div>
+    <div class="room-meta"><button class="btn btn-primary btn-sm" id="audioBlockedBtn" type="button" style="display:none;">🔊 Tap to hear everyone</button><button class="btn btn-primary btn-sm" id="roomRejoinBtn" type="button" style="display:none;">↻ Rejoin this meeting</button><span id="roomStatus">connecting…</span><span id="roomClock">00:00</span></div>
   </div>
   <div class="room-body">
     <div class="roster">
@@ -324,13 +326,13 @@
   </div>
 </section>
 
-<!-- ============ ENDED ============ -->
 <section id="ended" class="view">
   <div class="ended-card">
     <span class="big-shell">🐌</span>
     <h2>See you at the next crossing</h2>
     <p id="endedSummary">The meeting has ended.</p>
-    <button class="btn btn-primary" id="backHomeBtn" type="button">Back to Snail Meet</button>
+    <button class="btn btn-primary" id="endedRejoinBtn" type="button" style="display:none; margin-right:10px;"></button>
+    <button class="btn btn-ghost" id="backHomeBtn" type="button">Back to Snail Meet</button>
   </div>
 </section>
 
@@ -338,7 +340,6 @@
 (function(){
   "use strict";
 
-  /* ---------- Theme ---------- */
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var themeIcon = document.getElementById('themeIcon');
@@ -358,7 +359,6 @@
   });
   applyThemeLabel();
 
-  /* ---------- View switching ---------- */
   var views = {
     landing: document.getElementById('landing'),
     hostView: document.getElementById('hostView'),
@@ -368,6 +368,7 @@
   };
   function showView(name){
     Object.keys(views).forEach(function(k){ views[k].classList.toggle('active', k === name); });
+    if(name === 'landing' || name === 'ended'){ refreshRejoinButtons(); }
     window.scrollTo(0,0);
   }
 
@@ -375,8 +376,21 @@
   function pickWord(){ return WORDS[Math.floor(Math.random()*WORDS.length)]; }
   function makeCode(){ return pickWord() + "-" + pickWord() + "-" + Math.floor(100 + Math.random()*900); }
 
-  // Host + guests. Audio is a full mesh, so keep the cap modest.
   var MAX_MEMBERS = 8;
+
+  var SIGNAL_TIMEOUT_MS = 15000; 
+  var DIRECT_TIMEOUT_MS = 20000;
+
+  var SNAIL_CONFIG = window.SNAIL_CONFIG || {};
+  var PEER_OPTIONS = {};
+  if(SNAIL_CONFIG.peer){ PEER_OPTIONS = Object.assign({}, SNAIL_CONFIG.peer); }
+  if(SNAIL_CONFIG.iceServers){ PEER_OPTIONS.config = { iceServers: SNAIL_CONFIG.iceServers }; }
+  var USING_OWN_SERVER = !!PEER_OPTIONS.host;
+  function signalStallMessage(){
+    return USING_OWN_SERVER
+      ? "Still can't reach your signaling server (" + PEER_OPTIONS.host + "). Check that it is running, that the address in config.js is right, and that ports 80/443 are open. This page keeps trying — or you can try again."
+      : "Still can't reach PeerJS's free signaling server (0.peerjs.com). It's a shared public service that sometimes stalls for a minute or more, and some networks block it. This page keeps trying — or you can try again.";
+  }
 
   // Message kinds
   var CHAT = 'SNAIL_CHAT', REACT = 'SNAIL_REACT';
@@ -389,19 +403,26 @@
       myPeer: null,
       myId: null,
       myName: '',
-      hostConn: null,     // guest only: data connection to the host
+      hostConn: null,    
       localStream: null,
       silentStream: null,
       audioCtx: null,
       micPromise: null,
+      micAsking: false,
+      rejoining: false,  
+      rejoinUntil: 0,
+      retryTimer: null,
+      signalTimer: null,
+      directTimer: null,
+      hostCode: null,
       micOn: true,
       inRoom: false,
       declined: false,
       startTime: null,
       clockInterval: null,
-      pending: {},        // host only: peerId -> { conn, name }
-      members: {},        // peerId -> { name, conn (host only) }
-      calls: {}           // peerId -> MediaConnection
+      pending: {},
+      members: {},
+      calls: {}
     };
   }
   var state = freshState();
@@ -409,22 +430,57 @@
   function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
   function getLocalAudio(dotEl, textEl){
+    var say = function(cls, msg){
+      if(dotEl){ dotEl.className = 'status-dot ' + cls; }
+      if(textEl){ textEl.textContent = msg; }
+    };
+    if(state.localStream){ say('ok', 'Microphone ready.'); return Promise.resolve(state.localStream); }
     if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
-      dotEl.className = 'status-dot err'; textEl.textContent = "This browser can't access a microphone — you'll listen and chat only.";
+      say('err', "This browser can't access a microphone — you'll listen and chat only.");
       return Promise.resolve(null);
     }
+    var session = state;      
+    session.micAsking = true;
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
-      state.localStream = stream;
-      dotEl.className = 'status-dot ok'; textEl.textContent = 'Microphone ready.';
+      if(session !== state){ stream.getTracks().forEach(function(t){ t.stop(); }); return null; }
+      session.micAsking = false;
+      stream.getAudioTracks().forEach(function(t){ t.enabled = session.micOn; });
+      session.localStream = stream;
+      say('ok', 'Microphone ready.');
+      sendMicToCalls(stream);
+      updateMicButton();
       return stream;
     }).catch(function(){
-      dotEl.className = 'status-dot err'; textEl.textContent = "No microphone access — you'll listen and chat only.";
+      session.micAsking = false;
+      say('err', "No microphone access — you'll listen and chat only.");
       return null;
     });
   }
 
-  // People without a mic still need to place calls (PeerJS needs a stream), so
-  // they send a silent one and just listen.
+  function sendMicToCalls(stream){
+    var track = stream.getAudioTracks()[0];
+    if(!track) return;
+    Object.keys(state.calls).forEach(function(id){
+      var pc = state.calls[id].peerConnection;
+      if(!pc) return;
+      pc.getSenders().forEach(function(sender){
+        if(sender.track && sender.track.kind === 'audio'){ sender.replaceTrack(track).catch(function(){}); }
+      });
+    });
+  }
+
+  function updateMicButton(){
+    var b = micToggleBtn;
+    if(!b) return;
+    if(!state.localStream){
+      b.textContent = '🎙️'; b.classList.add('is-off'); b.title = 'Your microphone is off — click to turn it on';
+    } else {
+      b.textContent = state.micOn ? '🎙️' : '🔇';
+      b.classList.toggle('is-off', !state.micOn);
+      b.title = state.micOn ? 'Mute microphone' : 'Unmute microphone';
+    }
+  }
+
   function outStream(){
     if(state.localStream) return state.localStream;
     if(state.silentStream) return state.silentStream;
@@ -439,7 +495,6 @@
 
   function countMembers(){ return Object.keys(state.members).length; }
 
-  /* ---------- Landing ---------- */
   document.getElementById('startMeetingBtn').addEventListener('click', function(){
     resetHostView();
     showView('hostView');
@@ -452,7 +507,7 @@
   document.getElementById('hostBackBtn').addEventListener('click', function(){ teardown(); showView('landing'); });
   document.getElementById('guestBackBtn').addEventListener('click', function(){ teardown(); showView('landing'); });
   document.getElementById('guestBackBtn2').addEventListener('click', function(){ teardown(); resetGuestView(); showView('guestView'); });
-  document.getElementById('backHomeBtn').addEventListener('click', function(){ showView('landing'); });
+  document.getElementById('backHomeBtn').addEventListener('click', function(){ showView('landing'); refreshRejoinButtons(); });
 
   function checkIncomingLink(){
     var hash = window.location.hash || '';
@@ -464,7 +519,6 @@
     }
   }
 
-  /* ---------- Calls (audio mesh) ---------- */
   function attachAudio(id, stream){
     var container = document.getElementById('remoteAudioContainer');
     var el = document.getElementById('audio-' + id);
@@ -476,11 +530,21 @@
       container.appendChild(el);
     }
     el.srcObject = stream;
-    var p = el.play(); if(p && p.catch){ p.catch(function(){}); }
+    playAudio(el);
+  }
+
+  function playAudio(el){
+    var p = el.play();
+    if(p && p.then){ p.then(refreshAudioBlocked, function(){ document.getElementById('audioBlockedBtn').style.display = 'inline-flex'; }); }
+  }
+  function refreshAudioBlocked(){
+    var anyPaused = [].some.call(document.querySelectorAll('#remoteAudioContainer audio'), function(a){ return a.paused; });
+    document.getElementById('audioBlockedBtn').style.display = anyPaused ? 'inline-flex' : 'none';
   }
   function removeAudio(id){
     var el = document.getElementById('audio-' + id);
     if(el){ el.srcObject = null; el.remove(); }
+    refreshAudioBlocked();
   }
   function wireCall(call){
     var id = call.peer;
@@ -511,7 +575,6 @@
     });
   }
 
-  /* ---------- HOST ---------- */
   function resetHostView(){
     document.getElementById('hostCodeDisplay').style.display = 'none';
     document.getElementById('waitingRoom').style.display = 'none';
@@ -520,13 +583,14 @@
     document.getElementById('hostMicStatusText').textContent = 'Requesting microphone access…';
     document.getElementById('hostSetupStatusDot').className = 'status-dot pulse';
     document.getElementById('hostSetupStatusText').textContent = 'Setting up your meeting…';
+    document.getElementById('hostRetryBtn').style.display = 'none';
   }
 
-  function beginHosting(attemptsLeft, retryName){
-    if(attemptsLeft === undefined) attemptsLeft = 5;
+  function beginHosting(attemptsLeft, retryName, fixedCode){
+    if(attemptsLeft === undefined) attemptsLeft = fixedCode ? 10 : 5;
     state.role = 'host';
     state.myName = retryName || document.getElementById('hostNameInput').value.trim() || 'Host';
-    var code = makeCode();
+    var code = fixedCode || makeCode();
     var setupDot = document.getElementById('hostSetupStatusDot');
     var setupText = document.getElementById('hostSetupStatusText');
 
@@ -534,10 +598,24 @@
       state.micPromise = getLocalAudio(document.getElementById('hostMicStatusDot'), document.getElementById('hostMicStatusText'));
     }
 
-    var peer = new Peer(code);
+    state.hostCode = code;
+    var peer = new Peer(code, PEER_OPTIONS);
     state.myPeer = peer;
 
+    // If the signaling server is slow, say so instead of sitting on "Setting up…" forever.
+    // (It keeps trying — if the server answers late, the page carries on normally.)
+    var hostSession = state;
+    clearTimeout(state.signalTimer);
+    state.signalTimer = setTimeout(function(){
+      if(hostSession !== state || state.myId) return;
+      setupDot.className = 'status-dot err';
+      setupText.textContent = signalStallMessage();
+      document.getElementById('hostRetryBtn').style.display = 'inline-flex';
+    }, SIGNAL_TIMEOUT_MS);
+
     peer.on('open', function(id){
+      clearTimeout(state.signalTimer);
+      document.getElementById('hostRetryBtn').style.display = 'none';
       state.myId = id;
       state.members[id] = { name: state.myName, conn: null };
       document.getElementById('hostCodeValue').textContent = id;
@@ -546,10 +624,25 @@
       setupDot.className = 'status-dot ok';
       setupText.textContent = 'Meeting is live. Share the code above — up to ' + MAX_MEMBERS + ' people, including you.';
       window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(id);
+      rememberMeeting('host', id, state.myName);
       renderRoster();
     });
 
     peer.on('error', function(err){
+      clearTimeout(state.signalTimer);
+      if(err && err.type === 'unavailable-id' && fixedCode){
+        // The signaling server can take a few seconds to release a code after its owner leaves.
+        if(attemptsLeft > 0){
+          setupText.textContent = 'Reclaiming your meeting code…';
+          var session = state;
+          try{ peer.destroy(); }catch(e){}
+          setTimeout(function(){ if(session === state){ beginHosting(attemptsLeft - 1, state.myName, fixedCode); } }, 1500);
+          return;
+        }
+        setupDot.className = 'status-dot err';
+        setupText.textContent = "That code is still held by your previous session. Wait a few seconds and press Rejoin again, or start a new meeting.";
+        return;
+      }
       if(err && err.type === 'unavailable-id' && attemptsLeft > 0){
         try{ peer.destroy(); }catch(e){}
         beginHosting(attemptsLeft - 1, state.myName);
@@ -565,11 +658,6 @@
       var id = conn.peer;
       var name = (conn.metadata && conn.metadata.name) ? String(conn.metadata.name).slice(0, 24) : 'Someone';
 
-      // Wire data/close handlers right away, but don't show this knock — or let it
-      // be Allowed — until the data channel has actually finished opening. Sending
-      // on a PeerJS connection before its 'open' event fires is silently dropped,
-      // not queued, which previously let a host admit someone whose ADMIT message
-      // then vanished, leaving the guest stuck on "waiting for the host".
       conn.on('data', function(data){ handleHostData(id, data); });
       conn.on('close', function(){
         if(state.pending[id]){ delete state.pending[id]; renderRequests(); }
@@ -621,7 +709,6 @@
     renderRoster();
   }
 
-  // Renders the request list in both the host setup card and the in-room bell.
   function renderRequests(){
     var ids = Object.keys(state.pending);
     var targets = [
@@ -655,6 +742,10 @@
     if(countMembers() >= MAX_MEMBERS){ declineGuest(peerId, 'full'); return; }
     delete state.pending[peerId];
 
+    // The host's name field only appears after the meeting starts, so pick up what they typed now.
+    var typedName = document.getElementById('hostNameInput').value.trim();
+    if(typedName){ state.myName = typedName; if(state.members[state.myId]){ state.members[state.myId].name = typedName; } }
+
     var roster = Object.keys(state.members).map(function(mid){ return { id: mid, name: state.members[mid].name }; });
     try{ entry.conn.send({ kind: ADMIT, hostName: state.myName, roster: roster }); }catch(e){}
     broadcast({ kind: JOINED, id: peerId, name: entry.name }); // tell everyone already in
@@ -679,7 +770,6 @@
   document.getElementById('copyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
   document.getElementById('roomCopyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
 
-  /* ---------- GUEST ---------- */
   function resetGuestView(){
     document.getElementById('guestStep1').style.display = 'block';
     document.getElementById('guestStep2').style.display = 'none';
@@ -687,46 +777,92 @@
     document.getElementById('guestMicStatusText').textContent = 'Requesting microphone access…';
     document.getElementById('guestKnockStatusDot').className = 'status-dot pulse';
     document.getElementById('guestKnockStatusText').textContent = 'Connecting to the meeting…';
+    document.getElementById('guestRetryBtn').style.display = 'none';
   }
 
   document.getElementById('guestKnockBtn').addEventListener('click', function(){
     var code = document.getElementById('guestCodeInput').value.trim().toLowerCase();
     if(!code){ alert('Enter the meeting code first.'); return; }
+    knockMeeting(code, document.getElementById('guestNameInput').value.trim() || 'Guest');
+  });
+
+  function knockMeeting(code, name, opts){
     state.role = 'guest';
-    state.myName = document.getElementById('guestNameInput').value.trim() || 'Guest';
+    state.myName = name;
     state.declined = false;
+    state.rejoining = !!(opts && opts.rejoin);
+    state.rejoinUntil = Date.now() + 2 * 60 * 1000;
+    rememberMeeting('guest', code, name);
     document.getElementById('guestStep1').style.display = 'none';
     document.getElementById('guestStep2').style.display = 'block';
 
+    var session = state;
     var knockDot = document.getElementById('guestKnockStatusDot');
     var knockText = document.getElementById('guestKnockStatusText');
 
     state.micPromise = getLocalAudio(document.getElementById('guestMicStatusDot'), document.getElementById('guestMicStatusText'));
 
-    var peer = new Peer();
+    var retryBtn = document.getElementById('guestRetryBtn');
+    retryBtn.style.display = 'none';
+
+    var peer = new Peer(undefined, PEER_OPTIONS);
     state.myPeer = peer;
     wireIncomingCalls(peer);
 
-    peer.on('open', function(id){
-      state.myId = id;
-      var conn = peer.connect(code, { metadata: { name: state.myName }, reliable: true });
-      state.hostConn = conn;
+    state.signalTimer = setTimeout(function(){
+      if(session !== state || state.myId) return;
+      knockDot.className = 'status-dot err';
+      knockText.textContent = signalStallMessage();
+      retryBtn.style.display = 'inline-flex';
+    }, SIGNAL_TIMEOUT_MS);
+
+    function knock(){
+      var conn = peer.connect(code, { metadata: { name: session.myName }, reliable: true });
+      session.hostConn = conn;
       wireGuestConnection(conn, code);
+      // Stage 2: open the direct connection to the host.
+      clearTimeout(session.directTimer);
+      session.directTimer = setTimeout(function(){
+        if(session !== state || conn.open || session.inRoom || session.declined) return;
+        knockDot.className = 'status-dot err';
+        knockText.textContent = "Found the meeting, but couldn't open a direct connection to the host. Some networks block peer-to-peer connections — try again, or switch network (Wi-Fi or mobile data) on either side.";
+        retryBtn.style.display = 'inline-flex';
+      }, DIRECT_TIMEOUT_MS);
       conn.on('open', function(){
+        clearTimeout(session.directTimer);
+        retryBtn.style.display = 'none';
         knockDot.className = 'status-dot ok';
         knockText.textContent = "You're through the door — waiting for the host to tap Allow…";
       });
+    }
+
+    peer.on('open', function(id){
+      clearTimeout(session.signalTimer);
+      retryBtn.style.display = 'none';
+      state.myId = id;
+      knock();
     });
 
     peer.on('error', function(err){
+      if(session !== state) return;
+      clearTimeout(session.signalTimer);
+      clearTimeout(session.directTimer);
+      if(err && err.type === 'peer-unavailable' && session.rejoining && Date.now() < session.rejoinUntil){
+        knockDot.className = 'status-dot pulse';
+        knockText.textContent = 'Waiting for the host to come back — this will keep trying for a couple of minutes…';
+        session.retryTimer = setTimeout(function(){ if(session === state){ knock(); } }, 3000);
+        return;
+      }
       knockDot.className = 'status-dot err';
       if(err && err.type === 'peer-unavailable'){
-        knockText.textContent = "Couldn't find a meeting with that code. Double-check it and try again.";
+        knockText.textContent = session.rejoining
+          ? "The host hasn't come back. Ask them to rejoin, then try again."
+          : "Couldn't find a meeting with that code. Double-check it and try again.";
       } else {
         knockText.textContent = 'Connection trouble (' + (err && err.type ? err.type : 'unknown') + '). Try again.';
       }
     });
-  });
+  }
 
   function wireGuestConnection(conn, hostId){
     conn.on('data', function(data){
@@ -738,10 +874,9 @@
           state.members[state.myId] = { name: state.myName };
           if(!state.members[hostId]){ state.members[hostId] = { name: data.hostName || 'Host' }; }
           enterRoom();
-          // Call everyone who was already here; they answer, so each pair connects once.
-          (state.micPromise || Promise.resolve()).then(function(){
-            (data.roster || []).forEach(function(r){ callPeer(r.id); });
-          });
+          // Call everyone who was already here straight away (silent stream if the mic isn't
+          // ready yet); they answer, so each pair connects once.
+          (data.roster || []).forEach(function(r){ callPeer(r.id); });
           break;
         case DECLINE:
           state.declined = true;
@@ -772,9 +907,11 @@
       }
     });
     conn.on('close', function(){
+      if(conn !== state.hostConn) return;
       if(state.inRoom){
-        addSystemChatLine('The host has ended the meeting.');
-        document.getElementById('roomStatus').textContent = 'meeting ended';
+        addSystemChatLine('The host has left. If it was an accident they can rejoin with the same code — click "Rejoin this meeting" and it will keep trying until they are back.');
+        document.getElementById('roomRejoinBtn').style.display = 'inline-flex';
+        document.getElementById('roomStatus').textContent = 'host left';
         document.getElementById('chatInput').disabled = true;
         document.getElementById('chatSendBtn').disabled = true;
         Object.keys(state.calls).forEach(dropCall);
@@ -785,9 +922,10 @@
     });
   }
 
-  /* ---------- Room ---------- */
   function enterRoom(){
     state.inRoom = true;
+    rememberMeeting(state.role, state.role === 'host' ? state.myId : (state.hostConn && state.hostConn.peer), state.myName);
+    document.getElementById('roomRejoinBtn').style.display = 'none';
     document.getElementById('roomTitleText').textContent = 'Meeting room';
     document.getElementById('chatInput').disabled = false;
     document.getElementById('chatSendBtn').disabled = false;
@@ -796,6 +934,10 @@
     renderRoster();
     renderRequests();
     addSystemChatLine("You're connected — straight from browser to browser.");
+    updateMicButton();
+    if(!state.localStream){
+      addSystemChatLine("Your microphone isn't on yet, so others can't hear you. Allow it in the browser prompt, or click the mic button. You can hear everyone meanwhile.");
+    }
     state.startTime = Date.now();
     clearInterval(state.clockInterval);
     state.clockInterval = setInterval(updateClock, 1000);
@@ -905,15 +1047,26 @@
 
   var micToggleBtn = document.getElementById('micToggleBtn');
   micToggleBtn.addEventListener('click', function(){
-    if(!state.localStream){ micToggleBtn.title = 'No microphone connected'; return; }
+    if(!state.localStream){
+      if(state.micAsking){ addSystemChatLine("Still waiting on your browser's microphone prompt — look near the address bar."); return; }
+      addSystemChatLine('Asking your browser for the microphone…');
+      getLocalAudio(null, null).then(function(stream){
+        addSystemChatLine(stream
+          ? 'Microphone is on — everyone can hear you now.'
+          : "Couldn't get the microphone. Click the lock icon in the address bar, allow the microphone for this site, then click the mic again.");
+        updateMicButton();
+      });
+      return;
+    }
     state.micOn = !state.micOn;
     state.localStream.getAudioTracks().forEach(function(track){ track.enabled = state.micOn; });
-    micToggleBtn.textContent = state.micOn ? '🎙️' : '🔇';
-    micToggleBtn.classList.toggle('is-off', !state.micOn);
-    micToggleBtn.title = state.micOn ? 'Mute microphone' : 'Unmute microphone';
+    updateMicButton();
   });
 
-  /* ---------- Clipboard ---------- */
+  document.getElementById('audioBlockedBtn').addEventListener('click', function(){
+    document.querySelectorAll('#remoteAudioContainer audio').forEach(playAudio);
+  });
+
   function copyToClipboard(text, btn){
     if(!text) return;
     var done = function(){
@@ -933,19 +1086,26 @@
     document.body.removeChild(ta);
   }
 
-  /* ---------- Leave / teardown ---------- */
   document.getElementById('leaveBtn').addEventListener('click', function(){
+    var wasHost = state.role === 'host';
+    var othersHere = countMembers() - 1;
+    var question = (wasHost && othersHere > 0) ? "Leave the meeting? You're the host, so this ends it for everyone." : 'Leave the meeting?';
+    if(!window.confirm(question)) return;
     var secs = state.startTime ? Math.floor((Date.now() - state.startTime)/1000) : 0;
     var m = Math.floor(secs/60), s = secs%60;
-    var wasHost = state.role === 'host';
     teardown();
     document.getElementById('endedSummary').textContent =
       "That was " + (m>0 ? m+"m " : "") + s + "s of unhurried conversation." + (wasHost ? " Since you hosted, the meeting ended for everyone." : "") + " Nicely paced.";
     showView('ended');
+    refreshRejoinButtons();
   });
 
   function teardown(){
     clearInterval(state.clockInterval);
+    clearTimeout(state.retryTimer);
+    clearTimeout(state.signalTimer);
+    clearTimeout(state.directTimer);
+    document.getElementById('roomRejoinBtn').style.display = 'none';
     Object.keys(state.calls).forEach(function(id){ try{ state.calls[id].close(); }catch(e){} });
     Object.keys(state.members).forEach(function(id){ var c = state.members[id].conn; if(c){ try{ c.close(); }catch(e){} } });
     Object.keys(state.pending).forEach(function(id){ try{ state.pending[id].conn.close(); }catch(e){} });
@@ -958,8 +1118,74 @@
     document.getElementById('roomRequestList').innerHTML = '';
     document.getElementById('roomKnockBtn').classList.remove('has-badge');
     state = freshState();
-    micToggleBtn.textContent = '🎙️';
-    micToggleBtn.classList.remove('is-off');
+    updateMicButton();
+    refreshAudioBlocked();
+  }
+
+
+  var lastMeeting = null;
+  try{
+    var saved = JSON.parse(sessionStorage.getItem('snail-last-meeting') || 'null');
+    if(saved && saved.code && Date.now() - saved.at < 6 * 60 * 60 * 1000){ lastMeeting = saved; }
+  }catch(e){}
+
+  function rememberMeeting(role, code, name){
+    if(!code) return;
+    lastMeeting = { role: role, code: code, name: name || '', at: Date.now() };
+    try{ sessionStorage.setItem('snail-last-meeting', JSON.stringify(lastMeeting)); }catch(e){}
+  }
+
+  function refreshRejoinButtons(){
+    var label = lastMeeting ? '↻ Rejoin ' + lastMeeting.code + (lastMeeting.role === 'host' ? ' as host' : '') : '';
+    document.getElementById('landingRejoinRow').style.display = lastMeeting ? 'flex' : 'none';
+    document.getElementById('landingRejoinBtn').textContent = label;
+    var ended = document.getElementById('endedRejoinBtn');
+    ended.style.display = lastMeeting ? 'inline-flex' : 'none';
+    ended.textContent = label;
+  }
+
+  function rejoinLast(){
+    if(!lastMeeting) return;
+    var m = lastMeeting;
+    teardown();
+    if(m.role === 'host'){
+      resetHostView();
+      showView('hostView');
+      document.getElementById('hostNameInput').value = m.name;
+      beginHosting(undefined, m.name || 'Host', m.code);
+    } else {
+      resetGuestView();
+      showView('guestView');
+      document.getElementById('guestNameInput').value = m.name;
+      document.getElementById('guestCodeInput').value = m.code;
+      knockMeeting(m.code, m.name || 'Guest', { rejoin: true });
+    }
+  }
+  ['landingRejoinBtn', 'endedRejoinBtn', 'roomRejoinBtn'].forEach(function(id){
+    document.getElementById(id).addEventListener('click', rejoinLast);
+  });
+  refreshRejoinButtons();
+
+  document.getElementById('hostRetryBtn').addEventListener('click', function(){
+    var code = state.hostCode, name = state.myName;
+    teardown();
+    resetHostView();
+    showView('hostView');
+    beginHosting(undefined, name || 'Host', code || undefined);
+  });
+  document.getElementById('guestRetryBtn').addEventListener('click', function(){
+    var m = lastMeeting, wasRejoin = state.rejoining;
+    if(!m){ teardown(); resetGuestView(); return; }
+    teardown();
+    resetGuestView();
+    knockMeeting(m.code, m.name || 'Guest', { rejoin: wasRejoin });
+  });
+
+  if(typeof Peer === 'undefined'){
+    var warn = document.getElementById('libWarning');
+    warn.textContent = "Snail Meet couldn't load its connection library (PeerJS, from cdn.jsdelivr.net), so it can't start or join meetings. Check your internet connection and any ad or content blocker, then reload the page.";
+    warn.style.display = 'block';
+    ['startMeetingBtn', 'joinMeetingBtn', 'landingRejoinBtn'].forEach(function(id){ document.getElementById(id).disabled = true; });
   }
 
   checkIncomingLink();
