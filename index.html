@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<!-- Optional: config.js next to this file can point the app at your own signaling server. -->
 <script src="config.js"></script>
 <style>
   :root{
@@ -125,6 +126,7 @@
   .feature-card p{margin:6px 0 0; color:var(--text-muted); font-size:.88rem; line-height:1.5;}
   .footer-strip{text-align:center; padding:20px 20px 50px; color:var(--text-muted); font-size:.82rem;}
 
+  /* ---- ROOM ---- */
   #room{background:var(--moss-950); color:var(--cream-050); display:flex; flex-direction:column;}
   .room-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(245,239,221,0.14);}
   .room-title{display:flex; align-items:center; gap:10px; font-family:'Baloo 2'; font-size:1.05rem;}
@@ -186,6 +188,7 @@
 </head>
 <body>
 
+<!-- ============ LANDING ============ -->
 <section id="landing" class="view active">
   <div class="topbar">
     <div class="brandmark">
@@ -213,6 +216,34 @@
     <div class="note-box" id="libWarning" style="display:none; margin:22px auto 0; max-width:560px; text-align:left;"></div>
   </div>
 
+  <div class="card" id="callCard" style="margin-top:8px; text-align:left;">
+    <span class="step-label">Calls</span>
+    <h2 style="margin-top:8px;">Ring someone, even when their tab is closed</h2>
+    <p class="sub" id="callIntro">Pick a call name and turn on alerts on this device. Anyone can then ring you by typing that name, and you get a notification you can tap to answer.</p>
+
+    <div id="callSetup">
+      <div class="field">
+        <label for="callNameInput">Your call name</label>
+        <input type="text" id="callNameInput" placeholder="e.g. shelly" maxlength="24" autocomplete="off" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="cta-row" style="margin-top:14px; justify-content:flex-start;">
+        <button class="btn btn-primary btn-sm" id="callEnableBtn" type="button">Turn on call alerts</button>
+        <button class="btn btn-ghost btn-sm" id="callDisableBtn" type="button" style="display:none;">Turn off</button>
+      </div>
+    </div>
+    <div class="status-line" id="callStatusLine" style="display:none;"><span class="status-dot" id="callStatusDot"></span><span id="callStatusText"></span></div>
+
+    <div id="callDial" style="display:none; margin-top:22px;">
+      <div class="field">
+        <label for="callToInput">Call someone</label>
+        <input type="text" id="callToInput" placeholder="their call name" maxlength="24" autocomplete="off" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="cta-row" style="margin-top:14px; justify-content:flex-start;">
+        <button class="btn btn-primary btn-sm" id="callDialBtn" type="button">📞 Call</button>
+      </div>
+    </div>
+  </div>
+
   <div class="features">
     <div class="feature-card"><div class="ico">🚪</div><h3>One click per guest</h3><p>Share your meeting code once. Everyone who knocks waits for your Allow — even after the meeting has started.</p></div>
     <div class="feature-card"><div class="ico">🎙️</div><h3>Group voice, no camera</h3><p>Everyone in the room hears everyone else, plus shared chat and reactions. No camera, ever.</p></div>
@@ -221,6 +252,7 @@
   <div class="footer-strip">Snail Meet Lite · share a code, tap Allow, talk 🐌</div>
 </section>
 
+<!-- ============ HOST ============ -->
 <section id="hostView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Hosting</span></div>
   <div class="card">
@@ -236,6 +268,8 @@
     <div class="status-line"><span class="status-dot pulse" id="hostMicStatusDot"></span><span id="hostMicStatusText">Requesting microphone access…</span></div>
     <div class="status-line"><span class="status-dot pulse" id="hostSetupStatusDot"></span><span id="hostSetupStatusText">Setting up your meeting…</span></div>
     <button class="btn btn-ghost btn-sm" id="hostRetryBtn" type="button" style="display:none; margin-top:12px;">Try again</button>
+    <div class="status-line" id="callOutLine" style="display:none;"><span class="status-dot pulse" id="callOutDot"></span><span id="callOutText"></span></div>
+    <button class="btn btn-ghost btn-sm" id="callRingAgainBtn" type="button" style="display:none; margin-top:12px;">Ring again</button>
 
     <div class="code-display" id="hostCodeDisplay" style="display:none;">
       <div class="code-value" id="hostCodeValue"></div>
@@ -255,6 +289,7 @@
   </div>
 </section>
 
+<!-- ============ GUEST ============ -->
 <section id="guestView" class="view">
   <div class="topbar"><div class="brandmark"><span class="brand">Snail Meet</span></div><span class="pill">Joining</span></div>
   <div class="card" id="guestStep1">
@@ -283,7 +318,8 @@
     <button class="back-link" id="guestBackBtn2" type="button">← Cancel</button>
   </div>
 </section>
-  
+
+<!-- ============ ROOM ============ -->
 <section id="room" class="view">
   <div class="room-header">
     <div class="room-title"><span aria-hidden="true">🐌</span><span id="roomTitleText">Meeting room</span></div>
@@ -326,6 +362,7 @@
   </div>
 </section>
 
+<!-- ============ ENDED ============ -->
 <section id="ended" class="view">
   <div class="ended-card">
     <span class="big-shell">🐌</span>
@@ -340,6 +377,7 @@
 (function(){
   "use strict";
 
+  /* ---------- Theme ---------- */
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var themeIcon = document.getElementById('themeIcon');
@@ -359,6 +397,7 @@
   });
   applyThemeLabel();
 
+  /* ---------- View switching ---------- */
   var views = {
     landing: document.getElementById('landing'),
     hostView: document.getElementById('hostView'),
@@ -376,11 +415,20 @@
   function pickWord(){ return WORDS[Math.floor(Math.random()*WORDS.length)]; }
   function makeCode(){ return pickWord() + "-" + pickWord() + "-" + Math.floor(100 + Math.random()*900); }
 
+  // Host + guests. Audio is a full mesh, so keep the cap modest.
   var MAX_MEMBERS = 8;
 
-  var SIGNAL_TIMEOUT_MS = 15000; 
-  var DIRECT_TIMEOUT_MS = 20000;
+  // How long to wait before telling the person something is stuck (it keeps trying either way).
+  var SIGNAL_TIMEOUT_MS = 15000;   // reaching the PeerJS signaling server
+  var DIRECT_TIMEOUT_MS = 20000;   // opening the direct browser-to-browser connection to the host
 
+  // Connection options passed to PeerJS. With no config.js this stays empty, which means
+  // PeerJS's free public server (0.peerjs.com). A config.js next to this file can set:
+  //   window.SNAIL_CONFIG = {
+  //     peer: { host: 'signal.example.com', port: 443, path: '/', secure: true },   // your own PeerJS server
+  //     iceServers: [ { urls: 'stun:...' }, { urls: 'turn:...', username: '...', credential: '...' } ]  // optional
+  //   };
+  // (If you set iceServers they replace PeerJS's defaults, so include a STUN entry too.)
   var SNAIL_CONFIG = window.SNAIL_CONFIG || {};
   var PEER_OPTIONS = {};
   if(SNAIL_CONFIG.peer){ PEER_OPTIONS = Object.assign({}, SNAIL_CONFIG.peer); }
@@ -403,32 +451,38 @@
       myPeer: null,
       myId: null,
       myName: '',
-      hostConn: null,    
+      hostConn: null,     // guest only: data connection to the host
       localStream: null,
       silentStream: null,
       audioCtx: null,
       micPromise: null,
       micAsking: false,
-      rejoining: false,  
+      rejoining: false,   // guest: keep knocking while the host is away
       rejoinUntil: 0,
       retryTimer: null,
       signalTimer: null,
       directTimer: null,
       hostCode: null,
+      callTo: '',         // host: call name being rung from the landing page
+      callAnswered: false,
+      answerAs: '',       // guest: our call name, when answering a call notification
       micOn: true,
       inRoom: false,
       declined: false,
       startTime: null,
       clockInterval: null,
-      pending: {},
-      members: {},
-      calls: {}
+      pending: {},        // host only: peerId -> { conn, name }
+      members: {},        // peerId -> { name, conn (host only) }
+      calls: {}           // peerId -> MediaConnection
     };
   }
   var state = freshState();
 
   function escapeHtml(str){ var d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
+  // Asks for the microphone. Calls never wait on this: they start immediately with a silent
+  // stream, and the real mic track is swapped in (see sendMicToCalls) whenever it arrives.
+  // That way hearing others never depends on how quickly someone answers the browser's prompt.
   function getLocalAudio(dotEl, textEl){
     var say = function(cls, msg){
       if(dotEl){ dotEl.className = 'status-dot ' + cls; }
@@ -439,7 +493,7 @@
       say('err', "This browser can't access a microphone — you'll listen and chat only.");
       return Promise.resolve(null);
     }
-    var session = state;      
+    var session = state;      // if the person leaves while the prompt is open, don't touch the next session
     session.micAsking = true;
     return navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
       if(session !== state){ stream.getTracks().forEach(function(t){ t.stop(); }); return null; }
@@ -457,6 +511,7 @@
     });
   }
 
+  // Swap the real mic into calls that started with a silent stream.
   function sendMicToCalls(stream){
     var track = stream.getAudioTracks()[0];
     if(!track) return;
@@ -481,6 +536,8 @@
     }
   }
 
+  // People without a mic still need to place calls (PeerJS needs a stream), so
+  // they send a silent one and just listen.
   function outStream(){
     if(state.localStream) return state.localStream;
     if(state.silentStream) return state.silentStream;
@@ -495,6 +552,7 @@
 
   function countMembers(){ return Object.keys(state.members).length; }
 
+  /* ---------- Landing ---------- */
   document.getElementById('startMeetingBtn').addEventListener('click', function(){
     resetHostView();
     showView('hostView');
@@ -511,6 +569,12 @@
 
   function checkIncomingLink(){
     var hash = window.location.hash || '';
+    var a = hash.match(/^#answer=([^&]+)(?:&from=(.*))?$/);
+    if(a){
+      try{ history.replaceState(null, '', window.location.pathname + window.location.search); }catch(e){}
+      answerCall(decodeURIComponent(a[1]), a[2] ? decodeURIComponent(a[2]) : '');
+      return;
+    }
     var m = hash.match(/^#join=(.+)$/);
     if(m){
       resetGuestView();
@@ -519,6 +583,7 @@
     }
   }
 
+  /* ---------- Calls (audio mesh) ---------- */
   function attachAudio(id, stream){
     var container = document.getElementById('remoteAudioContainer');
     var el = document.getElementById('audio-' + id);
@@ -532,7 +597,8 @@
     el.srcObject = stream;
     playAudio(el);
   }
-
+  // Browsers can refuse to start audio until the page has been interacted with. If that
+  // happens, show a button instead of failing silently.
   function playAudio(el){
     var p = el.play();
     if(p && p.then){ p.then(refreshAudioBlocked, function(){ document.getElementById('audioBlockedBtn').style.display = 'inline-flex'; }); }
@@ -575,6 +641,7 @@
     });
   }
 
+  /* ---------- HOST ---------- */
   function resetHostView(){
     document.getElementById('hostCodeDisplay').style.display = 'none';
     document.getElementById('waitingRoom').style.display = 'none';
@@ -584,8 +651,11 @@
     document.getElementById('hostSetupStatusDot').className = 'status-dot pulse';
     document.getElementById('hostSetupStatusText').textContent = 'Setting up your meeting…';
     document.getElementById('hostRetryBtn').style.display = 'none';
+    document.getElementById('callOutLine').style.display = 'none';
+    document.getElementById('callRingAgainBtn').style.display = 'none';
   }
 
+  // fixedCode: reclaim a specific meeting code (rejoin) instead of generating a new one.
   function beginHosting(attemptsLeft, retryName, fixedCode){
     if(attemptsLeft === undefined) attemptsLeft = fixedCode ? 10 : 5;
     state.role = 'host';
@@ -626,6 +696,7 @@
       window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(id);
       rememberMeeting('host', id, state.myName);
       renderRoster();
+      if(state.callTo){ ringNow(); }
     });
 
     peer.on('error', function(err){
@@ -658,6 +729,11 @@
       var id = conn.peer;
       var name = (conn.metadata && conn.metadata.name) ? String(conn.metadata.name).slice(0, 24) : 'Someone';
 
+      // Wire data/close handlers right away, but don't show this knock — or let it
+      // be Allowed — until the data channel has actually finished opening. Sending
+      // on a PeerJS connection before its 'open' event fires is silently dropped,
+      // not queued, which previously let a host admit someone whose ADMIT message
+      // then vanished, leaving the guest stuck on "waiting for the host".
       conn.on('data', function(data){ handleHostData(id, data); });
       conn.on('close', function(){
         if(state.pending[id]){ delete state.pending[id]; renderRequests(); }
@@ -673,6 +749,12 @@
         }
         state.pending[id] = { conn: conn, name: name };
         renderRequests();
+        // The person we rang is answering from the notification: let them straight in, once.
+        var answeredAs = conn.metadata && conn.metadata.callAnswer ? String(conn.metadata.callAnswer).toLowerCase() : '';
+        if(state.callTo && !state.callAnswered && answeredAs === state.callTo){
+          state.callAnswered = true;
+          admitGuest(id);
+        }
       });
     });
   }
@@ -709,6 +791,7 @@
     renderRoster();
   }
 
+  // Renders the request list in both the host setup card and the in-room bell.
   function renderRequests(){
     var ids = Object.keys(state.pending);
     var targets = [
@@ -770,6 +853,7 @@
   document.getElementById('copyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
   document.getElementById('roomCopyLinkBtn').addEventListener('click', function(){ copyToClipboard(window._snailInviteLink || '', this); });
 
+  /* ---------- GUEST ---------- */
   function resetGuestView(){
     document.getElementById('guestStep1').style.display = 'block';
     document.getElementById('guestStep2').style.display = 'none';
@@ -786,10 +870,12 @@
     knockMeeting(code, document.getElementById('guestNameInput').value.trim() || 'Guest');
   });
 
+  // opts.rejoin: the host may be away (e.g. they left by accident), so keep knocking for a while.
   function knockMeeting(code, name, opts){
     state.role = 'guest';
     state.myName = name;
     state.declined = false;
+    state.answerAs = (opts && opts.answerAs) || '';
     state.rejoining = !!(opts && opts.rejoin);
     state.rejoinUntil = Date.now() + 2 * 60 * 1000;
     rememberMeeting('guest', code, name);
@@ -809,6 +895,7 @@
     state.myPeer = peer;
     wireIncomingCalls(peer);
 
+    // Stage 1: reach the signaling server. Say so if it stalls (it keeps trying either way).
     state.signalTimer = setTimeout(function(){
       if(session !== state || state.myId) return;
       knockDot.className = 'status-dot err';
@@ -817,7 +904,7 @@
     }, SIGNAL_TIMEOUT_MS);
 
     function knock(){
-      var conn = peer.connect(code, { metadata: { name: session.myName }, reliable: true });
+      var conn = peer.connect(code, { metadata: { name: session.myName, callAnswer: session.answerAs || undefined }, reliable: true });
       session.hostConn = conn;
       wireGuestConnection(conn, code);
       // Stage 2: open the direct connection to the host.
@@ -907,7 +994,7 @@
       }
     });
     conn.on('close', function(){
-      if(conn !== state.hostConn) return;
+      if(conn !== state.hostConn) return;   // an earlier knock attempt, already replaced
       if(state.inRoom){
         addSystemChatLine('The host has left. If it was an accident they can rejoin with the same code — click "Rejoin this meeting" and it will keep trying until they are back.');
         document.getElementById('roomRejoinBtn').style.display = 'inline-flex';
@@ -922,6 +1009,7 @@
     });
   }
 
+  /* ---------- Room ---------- */
   function enterRoom(){
     state.inRoom = true;
     rememberMeeting(state.role, state.role === 'host' ? state.myId : (state.hostConn && state.hostConn.peer), state.myName);
@@ -1067,6 +1155,7 @@
     document.querySelectorAll('#remoteAudioContainer audio').forEach(playAudio);
   });
 
+  /* ---------- Clipboard ---------- */
   function copyToClipboard(text, btn){
     if(!text) return;
     var done = function(){
@@ -1086,6 +1175,7 @@
     document.body.removeChild(ta);
   }
 
+  /* ---------- Leave / teardown ---------- */
   document.getElementById('leaveBtn').addEventListener('click', function(){
     var wasHost = state.role === 'host';
     var othersHere = countMembers() - 1;
@@ -1122,7 +1212,9 @@
     refreshAudioBlocked();
   }
 
-
+  /* ---------- Rejoin the same meeting code ---------- */
+  // The last meeting is remembered for this tab (sessionStorage), so a refresh or an accidental
+  // close can still be undone. Hosts reclaim the same code; guests keep knocking until the host is back.
   var lastMeeting = null;
   try{
     var saved = JSON.parse(sessionStorage.getItem('snail-last-meeting') || 'null');
@@ -1166,26 +1258,220 @@
   });
   refreshRejoinButtons();
 
+  // "Try again" after a stall: restart with the same code / same meeting.
   document.getElementById('hostRetryBtn').addEventListener('click', function(){
-    var code = state.hostCode, name = state.myName;
+    var code = state.hostCode, name = state.myName, ringTo = state.callTo;
     teardown();
     resetHostView();
     showView('hostView');
+    state.callTo = ringTo;
     beginHosting(undefined, name || 'Host', code || undefined);
   });
   document.getElementById('guestRetryBtn').addEventListener('click', function(){
-    var m = lastMeeting, wasRejoin = state.rejoining;
+    var m = lastMeeting, wasRejoin = state.rejoining, wasAnswerAs = state.answerAs;
     if(!m){ teardown(); resetGuestView(); return; }
     teardown();
     resetGuestView();
-    knockMeeting(m.code, m.name || 'Guest', { rejoin: wasRejoin });
+    knockMeeting(m.code, m.name || 'Guest', { rejoin: wasRejoin, answerAs: wasAnswerAs });
   });
 
+  // If the connection library didn't load (offline, blocked CDN, ad blocker), say so plainly.
   if(typeof Peer === 'undefined'){
     var warn = document.getElementById('libWarning');
     warn.textContent = "Snail Meet couldn't load its connection library (PeerJS, from cdn.jsdelivr.net), so it can't start or join meetings. Check your internet connection and any ad or content blocker, then reload the page.";
     warn.style.display = 'block';
     ['startMeetingBtn', 'joinMeetingBtn', 'landingRejoinBtn'].forEach(function(id){ document.getElementById(id).disabled = true; });
+  }
+
+  /* ---------- Call alerts (web push) ---------- */
+  // Needs the call server from setup-snail-server.sh --push, and its address in config.js:
+  //   window.SNAIL_CONFIG = { ..., push: 'https://your-host:10000' };
+  var CALL_BASE = SNAIL_CONFIG.push ? String(SNAIL_CONFIG.push).replace(/\/+$/, '') : '';
+  var CALL_KEY = 'snail-call-id';
+  var callId = null;   // { name, token }
+  try{ callId = JSON.parse(localStorage.getItem(CALL_KEY) || 'null'); }catch(e){}
+
+  function normCallName(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 24); }
+  function saveCallId(v){
+    callId = v;
+    try{ if(v){ localStorage.setItem(CALL_KEY, JSON.stringify(v)); } else { localStorage.removeItem(CALL_KEY); } }catch(e){}
+  }
+  function makeToken(){
+    var a = new Uint8Array(16); crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function(b){ return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function callApi(path, body){
+    var opts = body
+      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      : { method: 'GET' };
+    return fetch(CALL_BASE + path, opts).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(j){ return { status: r.status, body: j }; });
+    });
+  }
+  function urlB64ToBytes(s){
+    var pad = '='.repeat((4 - s.length % 4) % 4);
+    var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    var out = new Uint8Array(raw.length);
+    for(var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  var callStatusLine = document.getElementById('callStatusLine');
+  function callStatus(kind, text){
+    callStatusLine.style.display = text ? 'flex' : 'none';
+    document.getElementById('callStatusDot').className = 'status-dot ' + (kind || '');
+    document.getElementById('callStatusText').textContent = text || '';
+  }
+  function refreshCallCard(){
+    var on = !!(callId && callId.name);
+    var input = document.getElementById('callNameInput');
+    if(on){ input.value = callId.name; }
+    input.disabled = on;
+    document.getElementById('callEnableBtn').style.display = on ? 'none' : 'inline-flex';
+    document.getElementById('callDisableBtn').style.display = on ? 'inline-flex' : 'none';
+    document.getElementById('callDial').style.display = CALL_BASE ? 'block' : 'none';
+    if(on){ callStatus('ok', 'Call alerts are on for "' + callId.name + '" on this device.'); }
+  }
+
+  function pushSupported(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+
+  function enableCalls(){
+    var name = normCallName(document.getElementById('callNameInput').value);
+    if(name.length < 2){ callStatus('err', 'Pick a call name of at least 2 letters or numbers (a–z, 0–9, - or _).'); return; }
+    if(!pushSupported()){
+      callStatus('err', "This browser can't receive call alerts. On an iPhone or iPad, open this page in Safari, tap Share → Add to Home Screen, then open it from the home screen.");
+      return;
+    }
+    var btn = document.getElementById('callEnableBtn');
+    btn.disabled = true;
+    callStatus('pulse', 'Turning on call alerts…');
+    var token = (callId && callId.name === name && callId.token) || makeToken();
+    var reg;
+    Notification.requestPermission().then(function(perm){
+      if(perm !== 'granted') throw new Error('perm');
+      return navigator.serviceWorker.register('sw.js');
+    }).then(function(){
+      return navigator.serviceWorker.ready;
+    }).then(function(r){
+      reg = r;
+      return callApi('/vapid');
+    }).then(function(res){
+      if(!res.body || !res.body.key) throw new Error('vapid');
+      return reg.pushManager.getSubscription().then(function(old){ return old ? old.unsubscribe() : null; }).then(function(){
+        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToBytes(res.body.key) });
+      });
+    }).then(function(sub){
+      return callApi('/register', { name: name, token: token, subscription: sub.toJSON() });
+    }).then(function(res){
+      if(res.status === 409){ callStatus('err', 'The call name "' + name + '" is already taken. Pick another.'); return; }
+      if(res.status !== 200){ callStatus('err', "The call server didn't accept that (" + (res.body && res.body.error || res.status) + ')'); return; }
+      saveCallId({ name: name, token: token });
+      refreshCallCard();
+    }).catch(function(e){
+      if(e && e.message === 'perm'){ callStatus('err', 'Notifications are blocked for this site. Allow them in your browser\'s site settings, then try again.'); }
+      else { callStatus('err', "Couldn't reach the call server (" + CALL_BASE + "). Check that it is running and that config.js has the right address."); }
+    }).then(function(){ btn.disabled = false; });
+  }
+
+  function disableCalls(){
+    if(!callId) return;
+    var id = callId;
+    var done = function(){
+      saveCallId(null);
+      document.getElementById('callNameInput').value = '';
+      document.getElementById('callNameInput').disabled = false;
+      callStatus('', '');
+      refreshCallCard();
+    };
+    if(!pushSupported()){ done(); return; }
+    navigator.serviceWorker.getRegistration().then(function(reg){
+      return reg ? reg.pushManager.getSubscription() : null;
+    }).then(function(sub){
+      if(!sub) return null;
+      return callApi('/unregister', { name: id.name, token: id.token, endpoint: sub.endpoint }).catch(function(){}).then(function(){ return sub.unsubscribe(); });
+    }).catch(function(){}).then(done);
+  }
+
+  // Ring: called from the host screen once the meeting code exists.
+  function ringNow(){
+    var to = state.callTo;
+    if(!to || !state.myId) return;
+    var line = document.getElementById('callOutLine');
+    var dot = document.getElementById('callOutDot');
+    var text = document.getElementById('callOutText');
+    var again = document.getElementById('callRingAgainBtn');
+    line.style.display = 'flex'; dot.className = 'status-dot pulse'; text.textContent = 'Ringing ' + to + '…';
+    again.style.display = 'none';
+    var from = (callId && callId.name) || state.myName || 'Someone';
+    callApi('/ring', { to: to, from: from, code: state.myId }).then(function(res){
+      if(res.status === 200 && res.body.delivered > 0){
+        dot.className = 'status-dot ok';
+        text.textContent = 'Ringing ' + to + ' — they will be let in as soon as they answer.';
+      } else if(res.status === 404 || (res.status === 200)){
+        dot.className = 'status-dot err';
+        text.textContent = '"' + to + '" has no call alerts turned on (or they expired). Share the meeting code with them yourself instead.';
+      } else if(res.status === 429){
+        dot.className = 'status-dot err';
+        text.textContent = 'Too many rings in a short time. Wait a minute and ring again.';
+      } else {
+        dot.className = 'status-dot err';
+        text.textContent = "The call server didn't accept that ring (" + (res.body && res.body.error || res.status) + ').';
+      }
+      again.style.display = 'inline-flex';
+    }).catch(function(){
+      dot.className = 'status-dot err';
+      text.textContent = "Couldn't reach the call server, so nobody was rung. Share the meeting code instead.";
+      again.style.display = 'inline-flex';
+    });
+  }
+  document.getElementById('callRingAgainBtn').addEventListener('click', function(){
+    if(!state.callAnswered){ ringNow(); }
+  });
+
+  function dialCall(){
+    var to = normCallName(document.getElementById('callToInput').value);
+    if(to.length < 2){ callStatus('err', "Type the call name of the person you want to ring."); return; }
+    if(callId && to === callId.name){ callStatus('err', "That's your own call name."); return; }
+    teardown();
+    resetHostView();
+    showView('hostView');
+    state.callTo = to;
+    document.getElementById('hostNameInput').value = (callId && callId.name) || document.getElementById('hostNameInput').value;
+    beginHosting();
+  }
+
+  // Someone tapped Answer on a call notification (or opened a #answer link).
+  function answerCall(code, from){
+    code = String(code || '').toLowerCase();
+    if(!code) return;
+    if(state.inRoom){
+      // Already in a meeting: don't drop it silently.
+      if(!confirm((from || 'Someone') + ' is calling. Leave this meeting and answer?')) return;
+    }
+    teardown();
+    resetGuestView();
+    document.getElementById('guestCodeInput').value = code;
+    showView('guestView');
+    if(callId && callId.name){
+      document.getElementById('guestNameInput').value = callId.name;
+      knockMeeting(code, callId.name, { answerAs: callId.name });
+    }
+  }
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if(ev.data && ev.data.type === 'answer'){ answerCall(ev.data.code, ev.data.from); }
+    });
+  }
+
+  document.getElementById('callEnableBtn').addEventListener('click', enableCalls);
+  document.getElementById('callDisableBtn').addEventListener('click', disableCalls);
+  document.getElementById('callDialBtn').addEventListener('click', dialCall);
+  if(!CALL_BASE){
+    document.getElementById('callCard').style.display = 'none';
+  } else {
+    refreshCallCard();
+    // Keep an existing subscription's registration fresh and pick up the service worker.
+    if(callId && pushSupported()){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
   }
 
   checkIncomingLink();
