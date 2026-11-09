@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snail Meet — meetings that take their time</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><text y=%2232%22 font-size=%2232%22>🐌</text></svg>">
-<!-- Lets phones install Snail Meet as an app (needed for call alerts on iPhone and iPad). -->
+<!-- Lets phones install Snail Meet as an app (needed for call alerts on iPhone and iPad).  only 0.23% AI-->
 <link rel="manifest" href="https://8493834.github.io/meet/manifest.webmanifest">
 <link rel="apple-touch-icon" href="https://8493834.github.io/meet/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -194,6 +194,14 @@
 </style>
 </head>
 <body>
+
+<div id="incomingCall" role="alert" style="display:none; position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:50; width:min(92vw,420px); background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); padding:16px 18px; align-items:center; gap:12px; justify-content:space-between;">
+  <span style="font-weight:700;">📞 <span id="incomingCallText"></span></span>
+  <span style="display:flex; gap:8px;">
+    <button class="btn btn-primary btn-sm" id="incomingAnswerBtn" type="button">Answer</button>
+    <button class="btn btn-ghost btn-sm" id="incomingDeclineBtn" type="button">Decline</button>
+  </span>
+</div>
 
 <!-- ============ LANDING ============ -->
 <section id="landing" class="view active">
@@ -1454,8 +1462,48 @@
     beginHosting();
   }
 
+  // Ringtone while Snail Meet is open (the notification's own sound depends on the device's settings).
+  var ringCtx = null, ringTimer = null, ringStop = null, ringInfo = null;
+  function unlockAudio(){
+    if(!ringCtx){ try{ ringCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+    if(ringCtx && ringCtx.state === 'suspended'){ try{ ringCtx.resume(); }catch(e){} }
+  }
+  ['click', 'touchstart', 'keydown'].forEach(function(ev){ document.addEventListener(ev, unlockAudio, { passive: true }); });
+  function beep(){
+    if(!ringCtx || ringCtx.state !== 'running') return;
+    var t = ringCtx.currentTime;
+    [0, 0.35].forEach(function(off, i){
+      var o = ringCtx.createOscillator(), g = ringCtx.createGain();
+      o.type = 'sine'; o.frequency.value = i ? 523 : 659;
+      g.gain.setValueAtTime(0.0001, t + off);
+      g.gain.exponentialRampToValueAtTime(0.35, t + off + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + off + 0.3);
+      o.connect(g); g.connect(ringCtx.destination);
+      o.start(t + off); o.stop(t + off + 0.32);
+    });
+  }
+  function stopRinging(){
+    clearInterval(ringTimer); clearTimeout(ringStop); ringInfo = null;
+    document.getElementById('incomingCall').style.display = 'none';
+  }
+  function startRinging(from, code){
+    if(state.inRoom || !code) return;   // already in a meeting: the notification is enough
+    stopRinging();
+    ringInfo = { from: from, code: code };
+    document.getElementById('incomingCallText').textContent = (from || 'Someone') + ' is calling';
+    document.getElementById('incomingCall').style.display = 'flex';
+    beep();
+    ringTimer = setInterval(beep, 1800);
+    ringStop = setTimeout(stopRinging, 30000);
+  }
+  document.getElementById('incomingAnswerBtn').addEventListener('click', function(){
+    if(ringInfo){ answerCall(ringInfo.code, ringInfo.from); }
+  });
+  document.getElementById('incomingDeclineBtn').addEventListener('click', stopRinging);
+
   // Someone tapped Answer on a call notification (or opened a #answer link).
   function answerCall(code, from){
+    stopRinging();
     code = String(code || '').toLowerCase();
     if(!code) return;
     if(state.inRoom){
@@ -1473,7 +1521,9 @@
   }
   if('serviceWorker' in navigator){
     navigator.serviceWorker.addEventListener('message', function(ev){
-      if(ev.data && ev.data.type === 'answer'){ answerCall(ev.data.code, ev.data.from); }
+      if(!ev.data) return;
+      if(ev.data.type === 'answer'){ answerCall(ev.data.code, ev.data.from); }
+      else if(ev.data.type === 'ring'){ startRinging(ev.data.from, ev.data.code); }
     });
   }
 
