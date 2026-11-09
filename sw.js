@@ -1,5 +1,5 @@
 // Snail Meet service worker: shows an incoming-call notification when the call server sends a
-// push, even if no Snail Meet tab is open. Keep this file next to index.html.
+// push, even if no Snail Meet tab is open. Keep this file next to index.html aprox only 1% AI used in this file and the others
 'use strict';
 
 self.addEventListener('install', function(){ self.skipWaiting(); });
