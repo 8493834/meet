@@ -5,12 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snail Meet — meetings that take their time</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><text y=%2232%22 font-size=%2232%22>🐌</text></svg>">
+<!-- Lets phones install Snail Meet as an app (needed for call alerts on iPhone and iPad). -->
+<link rel="manifest" href="https://8493834.github.io/meet/manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://8493834.github.io/meet/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Snail Meet">
+<meta name="theme-color" content="#11190e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <!-- Optional: config.js next to this file can point the app at your own signaling server. -->
-<script src="config.js"></script>
+<script src="https://8493834.github.io/meet/config.js"></script>
 <style>
   :root{
     --moss-950:#11190e; --moss-900:#1b2716; --moss-800:#25341e; --moss-700:#34482a;
@@ -429,6 +436,9 @@
   //     iceServers: [ { urls: 'stun:...' }, { urls: 'turn:...', username: '...', credential: '...' } ]  // optional
   //   };
   // (If you set iceServers they replace PeerJS's defaults, so include a STUN entry too.)
+  // The real address of this app. Invite links use it, so they work even when this file is opened
+  // from a local copy (file://) instead of the website.
+  var SITE_URL = 'https://8493834.github.io/meet/';
   var SNAIL_CONFIG = window.SNAIL_CONFIG || {};
   var PEER_OPTIONS = {};
   if(SNAIL_CONFIG.peer){ PEER_OPTIONS = Object.assign({}, SNAIL_CONFIG.peer); }
@@ -693,7 +703,7 @@
       document.getElementById('waitingRoom').style.display = 'block';
       setupDot.className = 'status-dot ok';
       setupText.textContent = 'Meeting is live. Share the code above — up to ' + MAX_MEMBERS + ' people, including you.';
-      window._snailInviteLink = window.location.origin + window.location.pathname + '#join=' + encodeURIComponent(id);
+      window._snailInviteLink = SITE_URL + '#join=' + encodeURIComponent(id);
       rememberMeeting('host', id, state.myName);
       renderRoster();
       if(state.callTo){ ringNow(); }
@@ -1338,6 +1348,10 @@
   function enableCalls(){
     var name = normCallName(document.getElementById('callNameInput').value);
     if(name.length < 2){ callStatus('err', 'Pick a call name of at least 2 letters or numbers (a–z, 0–9, - or _).'); return; }
+    if(!/^https?:$/.test(location.protocol)){
+      callStatus('err', "Call alerts only work from the website itself, not from a file on your computer. Open " + SITE_URL + " instead.");
+      return;
+    }
     if(!pushSupported()){
       callStatus('err', "This browser can't receive call alerts. On an iPhone or iPad, open this page in Safari, tap Share → Add to Home Screen, then open it from the home screen.");
       return;
